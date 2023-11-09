@@ -1,0 +1,35 @@
+/*
+ * Canvas.h
+ *
+ *  Created on: May 21, 2020
+ *      Author: IulianPopa
+ */
+
+#pragma once
+
+#include "hiros_gui_base.h"
+
+#include "PixelProvider.h"
+
+class Canvas
+{
+public:
+	explicit Canvas(unsigned int width, unsigned int height)
+		: m_Width(width), m_Height(height)
+	{}
+
+	virtual ~Canvas() = default;
+
+	virtual bool setPixel (int h, int v, Pixel pixel) const = 0;
+	virtual Pixel getPixel (int h, int v) const = 0;
+
+	bool setPixel (int h, int v, Pixel pixel, float luminescence) const;
+	bool setPixel (int h, int v, const PixelProvider& provider) const { return setPixel (h, v, provider.get(h, v)); }
+	bool setPixel (int h, int v, const PixelProvider& provider, float luminescence) const { return setPixel(h, v, provider.get(h, v), luminescence); }
+
+	const uint16_t m_Width;
+	const uint16_t m_Height;
+
+	static Pixel maskPixel(const Pixel fgColor, const Pixel bkColor, const float factor);
+	static Pixel combinePixels(const Pixel p1, const Pixel p2, const float frac);
+};
