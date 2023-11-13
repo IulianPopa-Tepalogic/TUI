@@ -17,12 +17,12 @@ Fragment::Fragment(int hfrom, int vfrom, int width, int height, DrawableCanvas* 
 	UpdateArea(hfrom, vfrom, width, height);
 }
 
-bool Fragment::setPixel (int h, int v, Pixel pixel) const
+void Fragment::setPixel (int h, int v, Pixel pixel) const
 {
 	if ((v < 0 ) || (h < 0) || (v >= m_Height) || (h >= m_Width) || (m_Canvas == nullptr))
-		return false;
+		return;
 
-	return m_Canvas->setPixel(h + m_HFrom, v + m_VFrom, pixel);
+	m_Canvas->setPixel(h + m_HFrom, v + m_VFrom, pixel);
 }
 
 Pixel Fragment::getPixel (int h, int v) const

@@ -21,7 +21,7 @@ public:
 	{};
 	virtual ~Character() = default;
 
-	bool setPixel (int h, int v, Pixel pixel) const override;
+	void setPixel (int h, int v, Pixel pixel) const override;
 	Pixel getPixel (int h, int v) const override;
 
 	static const Pixel BLACK_PIXEL;

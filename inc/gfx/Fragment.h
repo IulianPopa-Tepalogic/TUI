@@ -15,7 +15,7 @@ public:
 	Fragment(int hfrom = 0, int vfrom = 0, int width = 0, int height = 0, DrawableCanvas* parent = nullptr);
 	virtual ~Fragment() = default;
 
-	bool setPixel (int h, int v, Pixel pixel) const override;
+	void setPixel (int h, int v, Pixel pixel) const override;
 	Pixel getPixel (int h, int v) const override;
 
 	void UpdateCanvas(DrawableCanvas& canvas);

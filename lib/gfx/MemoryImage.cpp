@@ -9,138 +9,21 @@
 
 using namespace std;
 
-bool MemoryImage::setPixel (int h, int v, Pixel pixel) const
+void MemoryImage::setPixel (int h, int v, Pixel pixel) const
 {
-	if ((v < 0) || (h < 0) || (v >= m_Height) || (h >= m_Width))
-		return false;
+	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))
+		return;
 
 	m_Buffer[pixelPos(h, v)] = pixel;
-	return true;
 }
 
 
 Pixel MemoryImage::getPixel (int h, int v) const
 {
+	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))
+		return Pixel(0, 0, 0);
+
 	return  m_Buffer[pixelPos(h, v)];
-}
-
-
-void MemoryImage::drawHLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel) const
-{
-	if (hfrom < 0)
-	{
-		const unsigned int off = -hfrom;
-		if (length <= off)
-			return ;
-
-		length -= off;
-		hfrom = 0;
-	}
-
-	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
-	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
-
-	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
-		for (unsigned int i = 0;  i < length; ++i)
-			m_Buffer[pixelPos(hfrom + i, vfrom + lineIdx)] =  pixel.get(hfrom + i, vfrom + lineIdx);
-}
-
-void MemoryImage::drawHLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
-{
-	if (dashFill == 0)
-		return ;
-
-	else if (dashSkip == 0)
-	{
-		drawHLine(hfrom, vfrom, length, width, pixel);
-		return ;
-	}
-	else if (hfrom < 0)
-	{
-		const unsigned int off = -hfrom;
-		if (length <= off)
-			return ;
-
-		length -= off;
-		hfrom = 0;
-	}
-
-	auto fill = dashFill;
-	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
-	width = ((vfrom + width) <= m_Width) ? width : (m_Width - vfrom);
-
-	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
-		for (unsigned int i = 0;  i < length; ++i)
-		{
-			if (fill == 0)
-			{
-				i += dashSkip - 1;
-				fill = dashFill;
-				continue;
-			}
-			else
-				fill--;
-
-			m_Buffer[pixelPos(hfrom + i, vfrom + lineIdx)] =  pixel.get(hfrom + i, vfrom + lineIdx);
-		}
-}
-
-void MemoryImage::drawVLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel) const
-{
-	if (vfrom < 0)
-	{
-		const unsigned int off = -vfrom;
-		if (length <= off)
-			return ;
-
-		length -= off;
-		vfrom = 0;
-	}
-
-	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
-	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
-
-	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
-		for (unsigned int i = 0;  i < length; ++i)
-			m_Buffer[pixelPos(hfrom + lineIdx, vfrom + i)] =  pixel.get(hfrom + lineIdx, vfrom + i);
-}
-
-void MemoryImage::drawVLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
-{
-	if (dashFill == 0)
-		return ;
-	else if (dashSkip == 0)
-	{
-		drawVLine(hfrom, vfrom, length, width, pixel);
-		return ;
-	}
-	else if (vfrom < 0)
-	{
-		const unsigned int off = -vfrom;
-		if (length <= off)
-			return ;
-
-		length -= off;
-		vfrom = 0;
-	}
-
-	auto fill = dashFill;
-	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
-	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
-	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
-	for (unsigned int i = 0;  i < length; ++i)
-	{
-		if (fill == 0)
-		{
-			i += dashSkip - 1;
-			fill = dashFill;
-			continue;
-		}
-		else
-			fill--;
-
-		m_Buffer[pixelPos(hfrom + lineIdx, vfrom + i)] =  pixel.get(hfrom + lineIdx, vfrom + i);
-	}
 }
 
 void MemoryImage::copyHorizontal(int hfrom, int vfrom, unsigned int width, int hto, int vto) const

@@ -9,9 +9,8 @@
 
 
 
-bool Character::setPixel (int h, int v, Pixel pixel) const
+void Character::setPixel (int h, int v, Pixel pixel) const
 {
-	return false;
 }
 
 

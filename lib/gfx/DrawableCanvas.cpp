@@ -20,21 +20,13 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	if (hfrom == hto)
 	{
 		const auto len = vto - vfrom;
-		if (len > 0)
-			drawVLine(hfrom, vfrom, len, 1, pixel);
-		else
-			drawVLine(hfrom, vfrom + len, -len, 1, pixel);
-
+		drawVLine(hfrom, vfrom, len, 1, pixel);
 		return ;
 	}
 	else if (vfrom == vto)
 	{
 		const auto len = hto - hfrom;
-		if (len > 0)
-			drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel);
-		else
-			drawHLine(hfrom + len, vfrom, -len, 1, pixel);
-
+		drawHLine(hfrom, vfrom, len, 1, pixel);
 		return ;
 	}
 
@@ -112,21 +104,13 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	if (hfrom == hto)
 	{
 		const auto len = vto - vfrom;
-		if (len > 0)
-			drawVLine(hfrom, vfrom, len, 1, pixel, dashFill, dashSkip);
-		else
-			drawVLine(hfrom, vfrom + len, -len, 1, pixel, dashFill, dashSkip);
-
+		drawVLine(hfrom, vfrom, len, 1, pixel, dashFill, dashSkip);
 		return ;
 	}
 	else if (vfrom == vto)
 	{
 		const auto len = hto - hfrom;
-		if (len > 0)
-			drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel, dashFill, dashSkip);
-		else
-			drawHLine(hfrom + len, vfrom, -len, 1, pixel, dashFill, dashSkip);
-
+		drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel, dashFill, dashSkip);
 		return ;
 	}
 
@@ -224,15 +208,23 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	}
 }
 
-void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, unsigned int length, float clockWiseDeg, const PixelProvider& pixel) const
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelProvider& pixel) const
 {
+	if (length < 0)
+	{
+		length = -length;
+		clockWiseDeg += 180;
+	}
+
+	clockWiseDeg = MathCalcs::normalizeDeg(clockWiseDeg);
+
 	const auto hto = hfrom + MathCalcs::cos(clockWiseDeg) * length;
 	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
 
 	drawLine(hfrom, vfrom, hto, vto, pixel);
 }
 
-void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, unsigned int length, float clockWiseDeg, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	const auto hto = hfrom + MathCalcs::cos(clockWiseDeg) * length;
 	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
@@ -241,45 +233,31 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, unsigned int length, f
 }
 
 
-void DrawableCanvas::drawHLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel) const
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel) const
 {
+	if (length < 0)
+	{
+		hfrom += length;
+		length = -length;
+	}
+
+	if (width < 0)
+	{
+		vfrom += width;
+		width = -width;
+	}
+
 	if (hfrom < 0)
 	{
 		const auto off = -hfrom;
-		if ((int)length <= off)
-			return ;
-
 		length -= off;
 		hfrom = 0;
 	}
-	else if (hfrom >= m_Width)
-	{
-		const auto off = -(hfrom - m_Width - 1);
-		hfrom = m_Width - 1;
 
-		if ((int)length <= off)
-			return ;
-
-		length -= off;
-	}
-
-	if (vfrom >= m_Height)
-	{
-		const int off = -(vfrom - m_Height - 1);
-		width -= off;
-
-		if ((int)width <= off)
-			return ;
-
-		vfrom = m_Height - 1;
-	}
-	else if (vfrom < 0)
+	if (vfrom < 0)
 	{
 		const int off = -vfrom;
 		vfrom = 0;
-
-		if ((int)width <= off)
-			return ;
 
 		width -= off;
 	}
@@ -287,12 +265,15 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, unsigned int length, unsig
 	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
 	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
+	if ((length <= 0) || (width <= 0))
+		return;
+
 	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
 		for (unsigned int i = 0;  i < length; ++i)
 			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
 }
 
-void DrawableCanvas::drawHLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -303,51 +284,37 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, unsigned int length, unsig
 		return ;
 	}
 
+	if (length < 0)
+	{
+		hfrom += length;
+		length = -length;
+	}
+
+	if (width < 0)
+	{
+		vfrom += width;
+		width = -width;
+	}
+
 	if (hfrom < 0)
 	{
 		const auto off = -hfrom;
-		if ((int)length <= off)
-			return ;
-
 		length -= off;
 		hfrom = 0;
 	}
-	else if (hfrom >= m_Width)
-	{
-		const auto off = -(hfrom - m_Width - 1);
-		hfrom = m_Width - 1;
 
-		if ((int)length <= off)
-			return ;
-
-		length -= off;
-	}
-
-	if (vfrom >= m_Height)
-	{
-		const int off = -(vfrom - m_Height - 1);
-		width -= off;
-
-		if ((int)width <= off)
-			return ;
-
-		vfrom = m_Height - 1;
-	}
-	else if (vfrom < 0)
+	if (vfrom < 0)
 	{
 		const int off = -vfrom;
 		vfrom = 0;
 
-		if ((int)width <= off)
-			return ;
-
 		width -= off;
 	}
 
-	auto fill = dashFill;
 	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
-	width = ((vfrom + width) <= m_Width) ? width : (m_Width - vfrom);
+	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
+	auto fill = dashFill;
 	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
 		for (unsigned int i = 0;  i < length; ++i)
 		{
@@ -364,126 +331,104 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, unsigned int length, unsig
 		}
 }
 
-void DrawableCanvas::drawVLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel) const
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel) const
 {
+	if (width < 0)
+	{
+		hfrom += width;
+		width = -width;
+	}
+
+	if (length < 0)
+	{
+		vfrom += length;
+		length = -length;
+	}
+
 	if (vfrom < 0)
 	{
-		const auto off = -vfrom;
+		const int off = -vfrom;
 		vfrom = 0;
-
-		if ((int)length <= off)
-			return ;
-
-		length -= off;
-	}
-	else if (vfrom >= m_Height)
-	{
-		const auto off = -(vfrom - m_Height - 1);
-		vfrom = m_Height - 1;
-
-		if ((int)length <= off)
-			return ;
-
 		length -= off;
 	}
 
-	if (hfrom >= m_Width)
-	{
-		const int off = -(hfrom - m_Width - 1);
-		hfrom = m_Width - 1;
-
-		if ((int)width <= off)
-			return ;
-
-		width -= off;
-	}
-	else if (hfrom < 0)
+	if (hfrom < 0)
 	{
 		const int off = -hfrom;
 		hfrom = 0;
-
-		if ((int)width <= off)
-			return ;
-
 		width -= off;
 	}
 
 	length = ((vfrom + length) <= m_Height) ? length : (m_Height - vfrom);
 	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
 
+	if ((length <= 0) || (width <= 0))
+		return;
+
 	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
 		for (unsigned int i = 0;  i < length; ++i)
 			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
 }
 
-void DrawableCanvas::drawVLine (int hfrom, int vfrom, unsigned int length, unsigned int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
+
 	else if (dashSkip == 0)
 	{
 		drawVLine(hfrom, vfrom, length, width, pixel);
 		return ;
 	}
 
+	if (width < 0)
+	{
+		hfrom -= width;
+		width = -width;
+	}
+
+	if (length < 0)
+	{
+		vfrom -= length;
+		length = -length;
+	}
+
 	if (vfrom < 0)
 	{
-		const auto off = -vfrom;
+		const int off = -vfrom;
 		vfrom = 0;
-
-		if ((int)length <= off)
-			return ;
-
-		length -= off;
-	}
-	else if (vfrom >= m_Height)
-	{
-		const auto off = -(vfrom - m_Height - 1);
-		vfrom = m_Height - 1;
-
-		if ((int)length <= off)
-			return ;
-
 		length -= off;
 	}
 
-	if (hfrom >= m_Width)
-	{
-		const int off = -(hfrom - m_Width - 1);
-		hfrom = m_Width - 1;
-
-		if ((int)width <= off)
-			return ;
-
-		width -= off;
-	}
-	else if (hfrom < 0)
+	if (hfrom < 0)
 	{
 		const int off = -hfrom;
 		hfrom = 0;
-
-		if ((int)width <= off)
-			return ;
-
 		width -= off;
 	}
 
-	auto fill = dashFill;
 	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
 	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
-	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
-	for (unsigned int i = 0;  i < length; ++i)
-	{
-		if (fill == 0)
-		{
-			i += dashSkip - 1;
-			fill = dashFill;
-			continue;
-		}
-		else
-			fill--;
 
-		setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
+	if ((length <= 0) || (width <= 0))
+		return;
+
+	auto fill = dashFill;
+	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
+	{
+		for (unsigned int i = 0;  i < length; ++i)
+		{
+			if (fill == 0)
+			{
+				i += dashSkip - 1;
+				fill = dashFill;
+				continue;
+			}
+			else
+				fill--;
+
+			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
+		}
 	}
 }
 
@@ -843,11 +788,9 @@ void DrawableCanvas::stretchCanvas(const Canvas& canvas, int hto, int vto, int w
 			const float hfact = (float)h / horFact;
 			const int hfactFloor = hfact;
 
-
 			const Pixel ph1 = combinePixels(canvas.getPixel(hfactFloor, vfactFloor), canvas.getPixel(hfactFloor + 1, vfactFloor), hfact - hfactFloor);
 			const Pixel ph2 = combinePixels(canvas.getPixel(hfactFloor, vfactFloor+1), canvas.getPixel(hfactFloor + 1, vfactFloor+1), hfact - hfactFloor);
-			if( ! setPixel(hto + h, vto + v, combinePixels(ph1, ph2, vfact - vfactFloor)))
-				break;
+			setPixel(hto + h, vto + v, combinePixels(ph1, ph2, vfact - vfactFloor));
 		}
 	}
 }
@@ -906,8 +849,7 @@ void DrawableCanvas::drawLetter(const Character& c, const PixelProvider& color, 
 			const Pixel mask = combineFontPixel(ph1, ph2, vfact - vfactFloor);
 
 			const float factor = (float)mask.blue / Character::BLACK_PIXEL.blue;
-			if (! setPixel(h + hto, v + vto, maskPixel(color.get(h, v), getPixel(h + hto, v + vto), factor)))
-				break;
+			setPixel(h + hto, v + vto, maskPixel(color.get(h, v), getPixel(h + hto, v + vto), factor));
 		}
 	}
 }
