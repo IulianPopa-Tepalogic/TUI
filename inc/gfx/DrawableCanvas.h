@@ -29,8 +29,8 @@ public:
 	virtual void drawHLine (int hfrom, int vfrom, int length, int width, const PixelProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& provider) const;
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
-	virtual void drawSemiCircle(int hcenter, int vcenter, unsigned int radius, unsigned int width, const PixelProvider& provider, float startAngle = 0.0, float endAngle = 360.0) const;
-	virtual void drawSemiCircle(int hcenter, int vcenter, unsigned int radius, unsigned int width, const PixelProvider& provider, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const;
+	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& provider, float startAngle = 0.0, float endAngle = 360.0) const;
+	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& provider, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const;
 
 	virtual void copyHorizontal(int hfrom, int vfrom, unsigned int width, int hto, int vto) const;
 	virtual void copyVertical(int hfrom, int vfrom, unsigned int height, int hto, int vto) const;

@@ -109,7 +109,6 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	}
 	else if (vfrom == vto)
 	{
-		const auto len = hto - hfrom;
 		drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel, dashFill, dashSkip);
 		return ;
 	}
@@ -226,6 +225,14 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float cloc
 
 void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
+	if (length < 0)
+	{
+		length = -length;
+		clockWiseDeg += 180;
+	}
+
+	clockWiseDeg = MathCalcs::normalizeDeg(clockWiseDeg);
+
 	const auto hto = hfrom + MathCalcs::cos(clockWiseDeg) * length;
 	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
 
@@ -268,8 +275,8 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	if ((length <= 0) || (width <= 0))
 		return;
 
-	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
-		for (unsigned int i = 0;  i < length; ++i)
+	for (int lineIdx = 0; lineIdx < width; lineIdx++)
+		for (int i = 0;  i < length; ++i)
 			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
 }
 
@@ -315,8 +322,8 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
 	auto fill = dashFill;
-	for (unsigned int lineIdx = 0; lineIdx < width; lineIdx++)
-		for (unsigned int i = 0;  i < length; ++i)
+	for (int lineIdx = 0; lineIdx < width; lineIdx++)
+		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
 			{
@@ -365,8 +372,8 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 	if ((length <= 0) || (width <= 0))
 		return;
 
-	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
-		for (unsigned int i = 0;  i < length; ++i)
+	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
+		for (int i = 0;  i < length; ++i)
 			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
 }
 
@@ -414,9 +421,9 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 		return;
 
 	auto fill = dashFill;
-	for (unsigned int lineIdx = 0; lineIdx < width; ++lineIdx)
+	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
 	{
-		for (unsigned int i = 0;  i < length; ++i)
+		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
 			{
@@ -477,9 +484,15 @@ static bool check_point_fourth_cadrant(float startAngle, float endAngle, float t
 	return (dh == .0f) && (endAngle > 270.0f) && (startAngle <= 270.0f);
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, unsigned int radius, unsigned int width, const PixelProvider& pixel, float startAngle, float endAngle) const
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& pixel, float startAngle, float endAngle) const
 {
-	if (radius < 1)
+	if (width < 0)
+	{
+		radius += -width;
+		width = -width;
+	}
+
+	if ((radius < 1) || (width == 0))
 		return ;
 
 	while (360.f < startAngle)
@@ -491,87 +504,87 @@ void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, unsigned int radiu
 	while (endAngle < startAngle)
 		endAngle += 360.0f;
 
-	float tanStartAngle = tan(MathCalcs::deg2rad(startAngle));
-	float tanEndAngle = tan(MathCalcs::deg2rad(endAngle));
+	const float tanStartAngle = tan(MathCalcs::deg2rad(startAngle));
+	const float tanEndAngle = tan(MathCalcs::deg2rad(endAngle));
 
-	unsigned int rfirst = radius;
-	unsigned int rsecond = max<int>(radius - width + 1, 0);
+	int first_ring_radius = radius;
+	int second_ring_radius = max<int>(radius - width + 1, 0);
 
-	int lastDvFirst = rfirst, lastDvsecond = rsecond;
-	for (int dh = 0; dh <= rfirst; ++dh)
+	int lastFirstV = first_ring_radius, lastSecondV = second_ring_radius;
+	for (int it_h = 0; it_h <= first_ring_radius; ++it_h)
 	{
-		const int dv_first = sqrt((float)(rfirst * rfirst - dh * dh));
-		const int dv_second = (dh < rsecond) ? sqrt((float)(rsecond * rsecond - dh * dh)) : 0;
+		const int firstV = sqrt((float)(first_ring_radius * first_ring_radius - it_h * it_h));
+		const int secondV = (it_h < second_ring_radius) ? sqrt((float)(second_ring_radius * second_ring_radius - it_h * it_h)) : 0;
 
-		for (int idv = lastDvFirst + 1; idv > dv_first; --idv)
+		for (int it_v = lastFirstV + 1; it_v > firstV; --it_v)
 		{
-			const float cradius = sqrt((float)(dh*dh + idv*idv));
-			float err = fabs(cradius - rfirst);
+			const float cradius = sqrt((float)(it_h*it_h + it_v*it_v));
+			float err = fabs(cradius - first_ring_radius);
 			if (1.f < err)
 				continue;
 
 			err = 1.f - err;
 
-			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, dh, idv))
-				setPixel(hcenter + dh, vcenter + idv, pixel, err);
+			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, it_v))
+				setPixel(hcenter + it_h, vcenter + it_v, pixel, err);
 
-			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, dh, -idv))
-				setPixel(hcenter + dh, vcenter - idv, pixel, err);
+			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, -it_v))
+				setPixel(hcenter + it_h, vcenter - it_v, pixel, err);
 
-			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -dh, idv))
-				setPixel(hcenter - dh, vcenter + idv, pixel, err);
+			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, it_v))
+				setPixel(hcenter - it_h, vcenter + it_v, pixel, err);
 
-			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -dh, -idv))
-				setPixel(hcenter - dh, vcenter - idv, pixel, err);
+			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, -it_v))
+				setPixel(hcenter - it_h, vcenter - it_v, pixel, err);
 		}
 
-		for (int idv = dv_first; (idv > dv_second) || (idv == 0); --idv)
+		for (int idv = firstV; (idv > secondV) || (idv == 0); --idv)
 		{
-			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, dh, idv))
-				setPixel(hcenter + dh, vcenter + idv, pixel);
+			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, idv))
+				setPixel(hcenter + it_h, vcenter + idv, pixel);
 
-			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, dh, -idv))
-				setPixel(hcenter + dh, vcenter - idv, pixel);
+			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, -idv))
+				setPixel(hcenter + it_h, vcenter - idv, pixel);
 
-			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -dh, idv))
-				setPixel(hcenter - dh, vcenter + idv, pixel);
+			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, idv))
+				setPixel(hcenter - it_h, vcenter + idv, pixel);
 
-			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -dh, -idv))
-				setPixel(hcenter - dh, vcenter - idv, pixel);
+			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, -idv))
+				setPixel(hcenter - it_h, vcenter - idv, pixel);
 		}
 
 
-		int lastDh = dh - 1;
-		if (lastDh >= 0)
+		int lastH = it_h - 1;
+		if (lastH >= 0)
 		{
-			for (int idv = lastDvsecond + 1; idv >= dv_second; --idv)
+			for (int idv = lastSecondV + 1; idv >= secondV; --idv)
 			{
-				const float cradius = sqrt((float)(lastDh*lastDh + idv*idv));
-				float err = fabs(cradius - rsecond);
+				const float cradius = sqrt((float)(lastH*lastH + idv*idv));
+				float err = fabs(cradius - second_ring_radius);
 				if (1.f < err)
 					continue;
 
 				err = 1.f - err;
-				if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastDh, idv))
-					setPixel(hcenter + lastDh, vcenter + idv, pixel, err);
+				if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastH, idv))
+					setPixel(hcenter + lastH, vcenter + idv, pixel, err);
 
-				if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastDh, -idv))
-					setPixel(hcenter + lastDh, vcenter - idv, pixel, err);
+				if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastH, -idv))
+					setPixel(hcenter + lastH, vcenter - idv, pixel, err);
 
-				if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastDh, +idv))
-					setPixel(hcenter - lastDh, vcenter + idv, pixel, err);
+				if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastH, +idv))
+					setPixel(hcenter - lastH, vcenter + idv, pixel, err);
 
-				if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastDh, -idv))
-					setPixel(hcenter - lastDh, vcenter - idv, pixel, err);
+				if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastH, -idv))
+					setPixel(hcenter - lastH, vcenter - idv, pixel, err);
 			}
 		}
 
-		lastDvFirst = dv_first;
-		lastDvsecond = dv_second;
+		lastFirstV = firstV;
+		lastSecondV = secondV;
 	}
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, unsigned int radius, unsigned int width, const PixelProvider& pixel, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& pixel, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -580,6 +593,15 @@ void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, unsigned int radiu
 		drawSemiCircle(hcenter, vcenter, radius, width, pixel, startAngle, endAngle);
 		return ;
 	}
+
+	if (width < 0)
+	{
+		radius += -width;
+		width = -width;
+	}
+
+	if ((radius < 1) || (width == 0))
+		return ;
 
 	if (endAngle < startAngle)
 		endAngle += 360.0f;
@@ -815,18 +837,6 @@ static constexpr Pixel combineFontPixel(const Pixel p1, const Pixel p2, const fl
 	return Pixel(0, 0, blue);
 }
 
-
-
-static Pixel maskPixel(const Pixel fgColor, const Pixel bkColor, const float factor)
-{
-	static constexpr Pixel allWhite(0xFF, 0xFF, 0xFF);
-
-	const float red = (1.0f - factor) * bkColor.red + factor * fgColor.red;
-	const float green = (1.0f - factor) * bkColor.green + factor * fgColor.green;
-	const float blue = (1.0f - factor) * bkColor.blue + factor * fgColor.blue;
-
-	return Pixel(red, green, blue);
-}
 
 
 void DrawableCanvas::drawLetter(const Character& c, const PixelProvider& color, int hto, int vto, const float multiply) const
