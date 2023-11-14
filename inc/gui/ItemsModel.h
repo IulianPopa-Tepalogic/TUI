@@ -14,7 +14,7 @@ public:
 	ItemsModel() = default;
 	virtual ~ItemsModel() = default;
 
-	virtual unsigned int count() = 0;
+	virtual int count() = 0;
 	virtual const void* itemAt(unsigned int itemIdx) = 0;
 	virtual bool updateItemAt(unsigned int itemIdx, void* item);
 	virtual bool insertItemBefore(unsigned int itemIdx, void* item);
@@ -30,7 +30,7 @@ public:
 	StringsModel(ENTRY* entries, size_t entriesCapacity, size_t entriesUsed = 0);
 	virtual ~StringsModel() = default;
 
-	unsigned int count() override;
+	int count() override;
 	const void* itemAt(unsigned int itemIdx) override;
 	bool updateItemAt(unsigned int itemIdx, void* item) override;
 	bool insertItemBefore(unsigned int itemIdx, void* item) override;

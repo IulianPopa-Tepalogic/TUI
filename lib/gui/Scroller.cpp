@@ -43,7 +43,7 @@ Control& Scroller::setHeight(unsigned int height)
 
 Scroller& Scroller::setVirtualWidth(unsigned int width)
 {
-	const auto newValue = max<unsigned int>(scrollAreaWidth(), width);
+	const auto newValue = max<int>(scrollAreaWidth(), width);
 	if (newValue != m_VirtualWidth)
 	{
 		m_VirtualWidth = newValue;
@@ -56,7 +56,7 @@ Scroller& Scroller::setVirtualWidth(unsigned int width)
 
 Scroller& Scroller::setVirtualHeight(unsigned int height)
 {
-	const auto newValue = max<unsigned int>(scrollAreaHeight(), height);
+	const auto newValue = max<int>(scrollAreaHeight(), height);
 	if (newValue != m_VirtualHeight)
 	{
 		m_VirtualHeight = newValue;
@@ -145,12 +145,12 @@ bool Scroller::handleUserInteractionEvent(unsigned int event, int h, int v)
 	return true;
 }
 
-unsigned int Scroller::scrollAreaWidth() const
+int Scroller::scrollAreaWidth() const
 {
 	return 0;
 }
 
-unsigned int Scroller::scrollAreaHeight() const
+int Scroller::scrollAreaHeight() const
 {
 	return 0;
 }

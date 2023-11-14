@@ -39,7 +39,7 @@ StringsModel::StringsModel(ENTRY* entries, size_t entriesCapacity, size_t entrie
 		HIROS_DIE();
 }
 
-unsigned int StringsModel::count()
+int StringsModel::count()
 {
 	return m_EntriesUsed;
 }

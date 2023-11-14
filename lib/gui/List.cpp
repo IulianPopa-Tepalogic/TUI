@@ -84,13 +84,13 @@ bool List::handleUserInteractionEvent(unsigned int event, int h, int v)
 	return Scroller::handleUserInteractionEvent(event, h, v);
 }
 
-unsigned int List::scrollAreaWidth() const
+int List::scrollAreaWidth() const
 {
 	return m_ItemsArea.m_Width;
 }
 
 
-unsigned int List::scrollAreaHeight() const
+int List::scrollAreaHeight() const
 {
 	return m_ItemsArea.m_Height;
 }
@@ -198,7 +198,7 @@ void List::refreshVirtualDimensions()
 {
 	uint16_t width = 0, height = 0;
 
-	const auto itemsCount = (m_Model == nullptr ? 0 : m_Model->count());
+	int itemsCount = (m_Model == nullptr ? 0 : m_Model->count());
 	if (m_Vertical)
 	{
 		for (int itemIdx = 0; itemIdx < itemsCount; ++itemIdx)

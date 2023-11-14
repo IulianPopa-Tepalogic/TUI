@@ -19,10 +19,10 @@ public:
 	Control& setHeight(unsigned int height) override;
 
 	Scroller& setVirtualWidth(unsigned int width);
-	unsigned int virtualWidth() const { return m_VirtualWidth; }
+	int virtualWidth() const { return m_VirtualWidth; }
 
 	Scroller& setVirtualHeight(unsigned int height);
-	unsigned int virtualHeight() const { return m_VirtualHeight; }
+	int virtualHeight() const { return m_VirtualHeight; }
 
 	Scroller& setVerticalOffset(int offset);
 	int verticalOffset() const {return m_VerticalOffset; }
@@ -34,8 +34,8 @@ public:
 
 
 protected:
-	virtual unsigned int scrollAreaWidth() const;
-	virtual unsigned int scrollAreaHeight() const;
+	virtual int scrollAreaWidth() const;
+	virtual int scrollAreaHeight() const;
 
 	bool isScrolling(int h, int v);
 	int horizontalOvershootAlignment() const;

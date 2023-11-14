@@ -29,8 +29,8 @@ public:
 	bool handleUserInteractionEvent(unsigned int event, int h, int v) override;
 
 protected:
-	unsigned int scrollAreaWidth() const override;
-	unsigned int scrollAreaHeight() const override;
+	int scrollAreaWidth() const override;
+	int scrollAreaHeight() const override;
 
 	void __draw(DrawableCanvas& canvas) override;
 	void refreshVirtualDimensions();

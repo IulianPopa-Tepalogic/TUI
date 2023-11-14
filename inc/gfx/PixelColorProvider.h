@@ -70,6 +70,22 @@ protected:
 	 CANVAS_PIXEL_PROVIDER m_Provider;
 };
 
+class WrapperPixelProvider : public PixelColorProvider
+{
+	WrapperPixelProvider(PixelColorProvider& main, int offsetH, int offsetV)
+		: m_Main(main)
+		, m_OffsetH(offsetH)
+		, m_OffsetV(offsetV)
+	{}
+
+	Pixel get(int h, int v) const override { return m_Main.get(m_OffsetH + h, m_OffsetV + v); }
+
+protected:
+	PixelColorProvider& m_Main;
+	const int16_t m_OffsetH;
+	const int16_t m_OffsetV;
+};
+
 
 class VericalGradient : public PixelColorProvider
 {
