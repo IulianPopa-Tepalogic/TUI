@@ -13,7 +13,7 @@
 using namespace std;
 
 
-void Shape::fill(const DrawableCanvas& canvas, const PixelProvider& pixel)
+void Shape::fill(const DrawableCanvas& canvas, const PixelColorProvider& pixel)
 {
 	const int hto = m_HStart + m_Width;
 	const int vto = m_VStart + m_Height;

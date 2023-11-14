@@ -5,8 +5,7 @@
  *      Author: IulianPopa
  */
 
-#include "gfx/PixelProvider.h"
-
+#include <gfx/PixelColorProvider.h>
 #include <algorithm>
 #include <math.h>
 
@@ -14,7 +13,7 @@
 
 using namespace std;
 
-Pixel VericalGradientPixelProvider::get(int h, int v) const
+Pixel VericalGradient::get(int h, int v) const
 {
 	const int start = m_Shape->vertical() + m_StartOffset;
 	if (v <= start)
@@ -27,7 +26,7 @@ Pixel VericalGradientPixelProvider::get(int h, int v) const
 	return m_Gradient.Interpolate(v - start, width);
 }
 
-Pixel HorizontalGradientPixelProvider::get(int h, int v) const
+Pixel HorizontalGradient::get(int h, int v) const
 {
 	const int start = m_Shape->horizontal() + m_StartOffset;
 
@@ -42,7 +41,7 @@ Pixel HorizontalGradientPixelProvider::get(int h, int v) const
 }
 
 
-Pixel RadiantGradientProvider::get(int h, int v) const
+Pixel RadiantGradient::get(int h, int v) const
 {
 	const int centh = (m_Shape->horizontal() + m_Shape->width() / 2);
 	const int centv = (m_Shape->vertical() + m_Shape->height() / 2);
@@ -65,7 +64,7 @@ Pixel RadiantGradientProvider::get(int h, int v) const
 }
 
 
-Pixel PatternPixelProvider::get(int h, int v) const
+Pixel CanvasBackground::get(int h, int v) const
 {
 	int newH = max<int>(h - m_Shape->horizontal(), 0);
 	int newV = max<int>(v - m_Shape->vertical(), 0);

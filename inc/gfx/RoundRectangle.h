@@ -15,10 +15,10 @@ public:
 	explicit RoundRectangle(uint16_t h, uint16_t v, uint16_t width, uint16_t height, uint8_t radius);
 	virtual ~RoundRectangle() = default;
 
-	bool isPositionInActiveRegion(int16_t h, int16_t v) override;
+	float isPositionInActiveRegion(int16_t h, int16_t v) override;
 
-	void drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth) override;
-	void fill(const DrawableCanvas& canvas, const PixelProvider& pattern) override;
+	void drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth) override;
+	void fill(const DrawableCanvas& canvas, const PixelColorProvider& pattern) override;
 
 	void setHorizontal(uint16_t h);
 	void setVertical(uint16_t v);

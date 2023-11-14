@@ -29,10 +29,10 @@ public:
 	Shape(const Shape& s) = delete;
 	const Shape& operator=(const Shape& s) = delete;
 
-	virtual void drawContour(const DrawableCanvas& canvas, const PixelProvider& provider, unsigned int borderWidth) = 0;
-	virtual void fill(const DrawableCanvas& canvas, const PixelProvider& provider);
+	virtual void drawContour(const DrawableCanvas& canvas, const PixelColorProvider& provider, unsigned int borderWidth) = 0;
+	virtual void fill(const DrawableCanvas& canvas, const PixelColorProvider& provider);
 
-	virtual bool isPositionInActiveRegion(int16_t h, int16_t v) = 0;
+	virtual float isPositionInActiveRegion(int16_t h, int16_t v) = 0;
 
 	int16_t horizontal() const { return m_HStart; }
 	int16_t vertical() const { return m_VStart; }

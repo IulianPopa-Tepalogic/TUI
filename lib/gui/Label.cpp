@@ -70,11 +70,11 @@ Label& Label::writeVertically(bool vertically)
 void Label::__draw(DrawableCanvas& canvas)
 {
 	const auto pos = (m_BorderSize > 0) ? m_BorderSize + m_BorderRadius : 0;
-	canvas.writeText(m_Text, *m_Font, ColorPixelProvider(m_Color), pos, pos, m_Size, m_Vertically);
+	canvas.writeText(m_Text, *m_Font, Unicolor(m_Color), pos, pos, m_Size, m_Vertically);
 
 	if (m_BorderSize > 0)
 	{
 		RoundRectangle controlShape(0, 0, canvas.m_Width, canvas.m_Height, m_BorderRadius);
-		controlShape.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		controlShape.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 	}
 }

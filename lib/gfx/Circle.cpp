@@ -50,15 +50,26 @@ void Circle::updateShapeInternals()
 	m_Width = m_Height = m_Radius * 2;
 }
 
-bool Circle::isPositionInActiveRegion(int16_t h, int16_t v)
+float Circle::isPositionInActiveRegion(int16_t h, int16_t v)
 {
 	const int ht = h - m_HCenter;
 	const int vt = (v - m_VCenter);
 
-	return (m_Radius * m_Radius) >= (vt * vt + ht * ht);
+	auto result = (vt * vt + ht * ht) - (m_Radius * m_Radius);
+
+	if (result <= -1.f)
+		return 1.0f;
+
+	else if (result > 1.0f)
+		return .0f;
+
+	else if (result >= .0f)
+		return 1.0 - result;
+
+	return result;
 }
 
-void Circle::drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth)
+void Circle::drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth)
 {
 	canvas.drawSemiCircle(m_HCenter, m_VCenter, m_Radius, borderWidth, pixel, .0f, 360.0f);
 }

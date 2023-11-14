@@ -15,7 +15,7 @@
 using namespace std;
 
 
-void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelProvider& pixel) const
+void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel) const
 {
 	if (hfrom == hto)
 	{
@@ -96,7 +96,7 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	}
 }
 
-void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -207,7 +207,7 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	}
 }
 
-void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelProvider& pixel) const
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& pixel) const
 {
 	if (length < 0)
 	{
@@ -223,7 +223,7 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float cloc
 	drawLine(hfrom, vfrom, hto, vto, pixel);
 }
 
-void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (length < 0)
 	{
@@ -240,7 +240,7 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float cloc
 }
 
 
-void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel) const
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel) const
 {
 	if (length < 0)
 	{
@@ -280,7 +280,7 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
 }
 
-void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -338,7 +338,7 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 		}
 }
 
-void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel) const
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel) const
 {
 	if (width < 0)
 	{
@@ -377,7 +377,7 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
 }
 
-void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -484,7 +484,7 @@ static bool check_point_fourth_cadrant(float startAngle, float endAngle, float t
 	return (dh == .0f) && (endAngle > 270.0f) && (startAngle <= 270.0f);
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& pixel, float startAngle, float endAngle) const
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle) const
 {
 	if (width < 0)
 	{
@@ -584,7 +584,7 @@ void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int wi
 	}
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelProvider& pixel, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (dashFill == 0)
 		return ;
@@ -817,7 +817,7 @@ void DrawableCanvas::stretchCanvas(const Canvas& canvas, int hto, int vto, int w
 	}
 }
 
-void DrawableCanvas::writeText(const USER_CHAR* string, const Font& font, const PixelProvider& color, int hto, int vto, float multiply, bool vertically) const
+void DrawableCanvas::writeText(const USER_CHAR* string, const Font& font, const PixelColorProvider& color, int hto, int vto, float multiply, bool vertically) const
 {
 	for (const USER_CHAR *ch = string; *ch != 0; ++ch)
 	{
@@ -839,7 +839,7 @@ static constexpr Pixel combineFontPixel(const Pixel p1, const Pixel p2, const fl
 
 
 
-void DrawableCanvas::drawLetter(const Character& c, const PixelProvider& color, int hto, int vto, const float multiply) const
+void DrawableCanvas::drawLetter(const Character& c, const PixelColorProvider& color, int hto, int vto, const float multiply) const
 {
 	const int lastv = c.m_Height * multiply;
 	const int lasth = c.m_Width * multiply;

@@ -62,7 +62,7 @@ void SemiCircle::updateShapeInternals()
 	m_Width = m_Height = m_Radius * 2;
 }
 
-bool SemiCircle::isPositionInActiveRegion(int16_t h, int16_t v)
+float SemiCircle::isPositionInActiveRegion(int16_t h, int16_t v)
 {
 	const float ht = h - m_HCenter;
 	const float vt = (v - m_VCenter) != .0f ? (v - m_VCenter) : .00001f;
@@ -85,10 +85,7 @@ bool SemiCircle::isPositionInActiveRegion(int16_t h, int16_t v)
 	return (m_AngleStart <= angle) || (angle <= m_AngleStop);
 }
 
-void SemiCircle::drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth)
+void SemiCircle::drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth)
 {
 		canvas.drawSemiCircle(m_HCenter, m_VCenter, m_Radius, borderWidth, pixel, m_AngleStart, m_AngleStop);
-
-//	for (int radius = m_Radius; (0 < radius) && (0 < borderWidth); --radius, --borderWidth)
-//		canvas.drawSemiCircle(m_HCenter, m_VCenter, radius, pixel, m_AngleStart, m_AngleStop);
 }

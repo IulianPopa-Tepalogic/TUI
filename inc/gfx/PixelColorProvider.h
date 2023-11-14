@@ -17,35 +17,35 @@
 class Shape;
 class Canvas;
 
-class PixelProvider
+class PixelColorProvider
 {
 public:
 	using CANVAS_PIXEL_PROVIDER = Pixel (*)(int h, int v, const Shape& shape);
 
-	PixelProvider()
+	PixelColorProvider()
 		: m_Shape(nullptr)
 	{}
 
-	explicit PixelProvider(const Shape& shape)
+	explicit PixelColorProvider(const Shape& shape)
 		: m_Shape(&shape)
 	{}
-	virtual ~PixelProvider() = default;
+	virtual ~PixelColorProvider() = default;
 
 	virtual Pixel get(int h, int v) const = 0;
 
 protected:
-	const Shape* m_Shape;
+	const Shape* const m_Shape;
 };
 
 
-class ColorPixelProvider : public PixelProvider
+class Unicolor : public PixelColorProvider
 {
 public:
-	ColorPixelProvider(const uint8_t red, const uint8_t green, const uint8_t blue)
-		: ColorPixelProvider(Pixel(red, green, blue))
+	Unicolor(const uint8_t red, const uint8_t green, const uint8_t blue)
+		: Unicolor(Pixel(red, green, blue))
 	{}
 
-	ColorPixelProvider(const Pixel& color)
+	Unicolor(const Pixel& color)
 		: m_Color(color)
 	{}
 
@@ -56,11 +56,11 @@ protected:
 };
 
 
-class CustomPixelProvider : public PixelProvider
+class CustomPixelProvider : public PixelColorProvider
 {
 public:
 	CustomPixelProvider(CANVAS_PIXEL_PROVIDER provider, const Shape& shape)
-		: PixelProvider(shape),
+		: PixelColorProvider(shape),
 		  m_Provider(provider)
 	{}
 
@@ -71,15 +71,15 @@ protected:
 };
 
 
-class VericalGradientPixelProvider : public PixelProvider
+class VericalGradient : public PixelColorProvider
 {
 public:
-	VericalGradientPixelProvider(const Pixel& from, const Pixel& to, const Shape& shape)
-		: VericalGradientPixelProvider(ColorGradient(from, to), shape)
+	VericalGradient(const Pixel& from, const Pixel& to, const Shape& shape)
+		: VericalGradient(ColorGradient(from, to), shape)
 	{}
 
-	VericalGradientPixelProvider(const ColorGradient& gradient, const Shape& shape)
-		: PixelProvider(shape),
+	VericalGradient(const ColorGradient& gradient, const Shape& shape)
+		: PixelColorProvider(shape),
 		  m_Gradient(gradient)
 	{}
 
@@ -91,16 +91,16 @@ public:
 };
 
 
-class HorizontalGradientPixelProvider : public PixelProvider
+class HorizontalGradient : public PixelColorProvider
 {
 public:
-	HorizontalGradientPixelProvider(const Pixel& from, const Pixel& to, const Shape& shape)
-		: HorizontalGradientPixelProvider(ColorGradient(from, to), shape)
+	HorizontalGradient(const Pixel& from, const Pixel& to, const Shape& shape)
+		: HorizontalGradient(ColorGradient(from, to), shape)
 	{}
 
-	HorizontalGradientPixelProvider(const ColorGradient& gradient, const Shape& shape)
-		: PixelProvider(shape),
-		  m_Gradient(gradient)
+	HorizontalGradient(const ColorGradient& gradient, const Shape& shape)
+		: PixelColorProvider(shape)
+		, m_Gradient(gradient)
 	{}
 
 	Pixel get(int h, int v) const;
@@ -111,15 +111,15 @@ public:
 };
 
 
-class RadiantGradientProvider : public PixelProvider
+class RadiantGradient : public PixelColorProvider
 {
 public:
-	RadiantGradientProvider(const Pixel& from, const Pixel& to, const Shape& shape)
-		: RadiantGradientProvider(ColorGradient(from, to), shape)
+	RadiantGradient(const Pixel& from, const Pixel& to, const Shape& shape)
+		: RadiantGradient(ColorGradient(from, to), shape)
 	{}
 
-	RadiantGradientProvider(const ColorGradient& gradient, const Shape& shape)
-		: PixelProvider(shape),
+	RadiantGradient(const ColorGradient& gradient, const Shape& shape)
+		: PixelColorProvider(shape),
 		  m_Gradient(gradient)
 	{}
 
@@ -130,19 +130,19 @@ public:
 	uint16_t m_RadiusOffset = 0;
 };
 
-class PatternPixelProvider : public PixelProvider
+class CanvasBackground : public PixelColorProvider
 {
 public:
-	PatternPixelProvider(const Canvas& pattern, bool repeatHorizontally, bool repeatVertically, const Shape& shape)
-	: PixelProvider(shape),
+	CanvasBackground(const Canvas& pattern, bool repeatHorizontally, bool repeatVertically, const Shape& shape)
+	: PixelColorProvider(shape),
 	  m_Pattern(pattern),
 	  m_RepeatedHorizontally(repeatHorizontally),
 	  m_RepeatedVertically(repeatVertically),
 	  m_Stretch(false)
 	{};
 
-	PatternPixelProvider(const Canvas& pattern, bool stretch, const Shape& shape)
-	: PixelProvider(shape),
+	CanvasBackground(const Canvas& pattern, bool stretch, const Shape& shape)
+	: PixelColorProvider(shape),
 	  m_Pattern(pattern),
 	  m_RepeatedHorizontally(false),
 	  m_RepeatedVertically(false),

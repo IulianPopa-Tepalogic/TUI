@@ -213,11 +213,11 @@ bool Dialog::drawDialogFrame()
 	m_Canvas->fillColor(Pixel(0, 0, 0));
 	if (DIALOG_BORDER_SIZE >= 0)
 	{
-		m_Canvas->drawHLine(0, 0, m_Canvas->m_Width, DIALOG_BORDER_SIZE, ColorPixelProvider(DIALOG_BORDER_COLOR));
-		m_Canvas->drawHLine(0, m_Canvas->m_Height - DIALOG_BORDER_SIZE, m_Canvas->m_Width, DIALOG_BORDER_SIZE, ColorPixelProvider(DIALOG_BORDER_COLOR));
+		m_Canvas->drawHLine(0, 0, m_Canvas->m_Width, DIALOG_BORDER_SIZE, Unicolor(DIALOG_BORDER_COLOR));
+		m_Canvas->drawHLine(0, m_Canvas->m_Height - DIALOG_BORDER_SIZE, m_Canvas->m_Width, DIALOG_BORDER_SIZE, Unicolor(DIALOG_BORDER_COLOR));
 
-		m_Canvas->drawVLine(0, 0, m_Canvas->m_Height, DIALOG_BORDER_SIZE, ColorPixelProvider(DIALOG_BORDER_COLOR));
-		m_Canvas->drawVLine(m_Canvas->m_Width - DIALOG_BORDER_SIZE, 0, m_Canvas->m_Height, DIALOG_BORDER_SIZE, ColorPixelProvider(DIALOG_BORDER_COLOR));
+		m_Canvas->drawVLine(0, 0, m_Canvas->m_Height, DIALOG_BORDER_SIZE, Unicolor(DIALOG_BORDER_COLOR));
+		m_Canvas->drawVLine(m_Canvas->m_Width - DIALOG_BORDER_SIZE, 0, m_Canvas->m_Height, DIALOG_BORDER_SIZE, Unicolor(DIALOG_BORDER_COLOR));
 	}
 
 	if (m_Title != nullptr)
@@ -233,7 +233,7 @@ bool Dialog::drawDialogFrame()
 		const auto title_width = min<unsigned int>(ceil(font.getStringWidth(m_Title) * DIALOG_FONT_SCALE), titleBar.m_Width);
 		const auto title_height = min<unsigned int>(titleBar.m_Height, ceil(font.getStringMaxHeight(m_Title) * DIALOG_FONT_SCALE));
 
-		titleBar.writeText(m_Title, font, ColorPixelProvider(DIALOG_TITLE_COLOR), (titleBar.m_Width - title_width) / 2, (titleBar.m_Height - title_height) / 2, DIALOG_FONT_SCALE);
+		titleBar.writeText(m_Title, font, Unicolor(DIALOG_TITLE_COLOR), (titleBar.m_Width - title_width) / 2, (titleBar.m_Height - title_height) / 2, DIALOG_FONT_SCALE);
 
 
 		m_UserArea.UpdateCanvas(*m_Canvas);

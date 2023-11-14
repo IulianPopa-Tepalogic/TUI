@@ -14,8 +14,8 @@ public:
 	SemiCircle(int16_t hcenter, int16_t vcenter, uint16_t radius, float fromDegCW, float endDegCW);
 	virtual ~SemiCircle() = default;
 
-	bool isPositionInActiveRegion(int16_t h, int16_t v) override;
-	void drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth) override;
+	float isPositionInActiveRegion(int16_t h, int16_t v) override;
+	void drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth) override;
 
 	void setHorizontal(int16_t hcenter);
 	void setVertical(int16_t vcenter);

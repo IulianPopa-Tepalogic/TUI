@@ -58,7 +58,7 @@ ProgressBar& ProgressBar::setValue(float level)
 void ProgressBar::__draw(DrawableCanvas& canvas)
 {
 	RoundRectangle rr(0, 0, canvas.m_Width, canvas.m_Height, m_BorderRadius);
-	rr.fill(canvas, ColorPixelProvider(m_RemainColor));
+	rr.fill(canvas, Unicolor(m_RemainColor));
 
 	if (m_Vertically)
 	{
@@ -82,5 +82,5 @@ void ProgressBar::__draw(DrawableCanvas& canvas)
 
 	}
 
-	rr.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+	rr.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 }

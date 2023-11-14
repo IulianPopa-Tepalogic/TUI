@@ -18,18 +18,18 @@ Rectangle::Rectangle(uint16_t h, uint16_t v, uint16_t width, uint16_t height)
 }
 
 
-bool Rectangle::isPositionInActiveRegion(int16_t h, int16_t v)
+float Rectangle::isPositionInActiveRegion(int16_t h, int16_t v)
 {
 	if ( h < 0 || m_Width <= h)
-		return false;
+		return .0f;
 
 	if ( v < 0 || m_Height <= v)
-		return false;
+		return .0f;
 
-	return true;
+	return 1.0f;
 }
 
-void Rectangle::drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth)
+void Rectangle::drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth)
 {
 	if (borderWidth <= 0)
 		return;
@@ -62,7 +62,7 @@ void Rectangle::setHeight(uint16_t height)
 }
 
 
-void Rectangle::fill(const DrawableCanvas& canvas, const PixelProvider& color)
+void Rectangle::fill(const DrawableCanvas& canvas, const PixelColorProvider& color)
 {
 	canvas.drawHLine(m_HStart, m_VStart, m_Width, m_Height, color);
 

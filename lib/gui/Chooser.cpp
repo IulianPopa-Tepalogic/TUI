@@ -122,7 +122,7 @@ void Chooser::__draw(DrawableCanvas& canvas)
 	if (m_BorderSize > 0)
 	{
 		RoundRectangle rr(0, 0, canvas.m_Width, canvas.m_Height, m_BorderRadius);
-		rr.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		rr.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 	}
 }
 

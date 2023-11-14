@@ -252,12 +252,12 @@ void Button::__draw(DrawableCanvas& canvas)
 
 	const Canvas* bkPattern = m_Pressed ? m_BkPressedPattern : m_BkPattern;
 	if (bkPattern != nullptr)
-		controlShape.fill(canvas, PatternPixelProvider(*bkPattern, true, true, controlShape));
+		controlShape.fill(canvas, CanvasBackground(*bkPattern, true, true, controlShape));
 	else
-		controlShape.fill(canvas, ColorPixelProvider(m_Pressed ? m_BkPressedColor : m_BkColor));
+		controlShape.fill(canvas, Unicolor(m_Pressed ? m_BkPressedColor : m_BkColor));
 
 	if (m_BorderSize > 0)
-		controlShape.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		controlShape.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 
 	if (m_Text == nullptr)
 		return ;
@@ -269,5 +269,5 @@ void Button::__draw(DrawableCanvas& canvas)
 	const int htext = (m_Width - textWidth) / 2;
 	const int vtext = (m_Height - textHeight) / 2;
 
-	canvas.writeText(m_Text, *m_Font, ColorPixelProvider(m_Pressed ? m_TextPressedColor : m_TextColor), htext, vtext, textSize, false);
+	canvas.writeText(m_Text, *m_Font, Unicolor(m_Pressed ? m_TextPressedColor : m_TextColor), htext, vtext, textSize, false);
 }

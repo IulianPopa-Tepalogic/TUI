@@ -23,7 +23,7 @@ RoundRectangle::RoundRectangle(uint16_t h, uint16_t v, uint16_t width, uint16_t 
 
 
 
-bool RoundRectangle::isPositionInActiveRegion(int16_t h, int16_t v)
+float RoundRectangle::isPositionInActiveRegion(int16_t h, int16_t v)
 {
 	if ((h < m_HStart) || ((m_HStart + m_Width) <= h))
 		return false;
@@ -63,7 +63,7 @@ bool RoundRectangle::isPositionInActiveRegion(int16_t h, int16_t v)
 	return true;
 }
 
-void RoundRectangle::drawContour(const DrawableCanvas& canvas, const PixelProvider& pixel, unsigned int borderWidth)
+void RoundRectangle::drawContour(const DrawableCanvas& canvas, const PixelColorProvider& pixel, unsigned int borderWidth)
 {
 	canvas.drawHLine(m_HStart + m_Radius, m_VStart, m_Width - m_Radius * 2, borderWidth, pixel);
 	canvas.drawHLine(m_HStart + m_Radius, m_VStart + m_Height - borderWidth, m_Width - m_Radius * 2, borderWidth, pixel);
@@ -79,7 +79,7 @@ void RoundRectangle::drawContour(const DrawableCanvas& canvas, const PixelProvid
 }
 
 
-void RoundRectangle::fill(const DrawableCanvas& canvas, const PixelProvider& color)
+void RoundRectangle::fill(const DrawableCanvas& canvas, const PixelColorProvider& color)
 {
 	canvas.drawHLine(m_HStart + m_Radius, m_VStart, m_Width - m_Radius * 2, m_Height, color);
 	canvas.drawVLine(m_HStart, m_VStart + m_Radius, m_Height - m_Radius * 2, m_Radius, color);

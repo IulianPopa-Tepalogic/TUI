@@ -14,9 +14,9 @@ public:
 	Circle(int16_t hcenter, int16_t vcenter, uint16_t radius);
 	virtual ~Circle() = default;
 
-	bool isPositionInActiveRegion(int16_t h, int16_t v) override;
+	float isPositionInActiveRegion(int16_t h, int16_t v) override;
 
-	void drawContour(const DrawableCanvas&, const PixelProvider& pixel, unsigned int borderWidth) override;
+	void drawContour(const DrawableCanvas&, const PixelColorProvider& pixel, unsigned int borderWidth) override;
 
 	void setHorizontal(int16_t hcenter);
 	void setVertical(int16_t vcenter);

@@ -216,7 +216,7 @@ void Slider::__draw(DrawableCanvas& canvas)
 	if (m_Vertically)
 	{
 		RoundRectangle rr((canvas.m_Width - m_LevelThickness) / 2, 0, m_LevelThickness, canvas.m_Height, m_LevelRadius);
-		rr.fill(canvas, ColorPixelProvider(m_RemainColor));
+		rr.fill(canvas, Unicolor(m_RemainColor));
 
 		const int16_t fillHeight = canvas.m_Height - canvas.m_Height * value();
 		for (int v = canvas.m_Height - 1; fillHeight < v; --v)
@@ -226,15 +226,15 @@ void Slider::__draw(DrawableCanvas& canvas)
 					canvas.setPixel(h, v, m_CompletedColor);
 			}
 
-		rr.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		rr.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 
 		RoundRectangle indicator(0, fillHeight  - (m_IndicatorThickness / 2),  canvas.m_Width, m_IndicatorThickness, m_IndicatorRadius);
-		indicator.fill(canvas, ColorPixelProvider(m_IndicatorColor));
+		indicator.fill(canvas, Unicolor(m_IndicatorColor));
 	}
 	else
 	{
 		RoundRectangle rr(0, (canvas.m_Height - m_LevelThickness) / 2, canvas.m_Width, m_LevelThickness, m_LevelRadius);
-		rr.fill(canvas, ColorPixelProvider(m_RemainColor));
+		rr.fill(canvas, Unicolor(m_RemainColor));
 
 		const int16_t fillWidth = canvas.m_Width * value();
 		for (int v = 0; v < canvas.m_Height; ++v)
@@ -244,9 +244,9 @@ void Slider::__draw(DrawableCanvas& canvas)
 					canvas.setPixel(h, v, m_CompletedColor);
 			}
 
-		rr.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		rr.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 
 		RoundRectangle indicator(fillWidth - (m_IndicatorThickness / 2), 0, m_IndicatorThickness, canvas.m_Height, m_IndicatorRadius);
-		indicator.fill(canvas, ColorPixelProvider(m_IndicatorColor));
+		indicator.fill(canvas, Unicolor(m_IndicatorColor));
 	}
 }

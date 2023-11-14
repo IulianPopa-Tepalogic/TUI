@@ -169,7 +169,7 @@ void List::__draw(DrawableCanvas& canvas)
 						   SCROLLER_SCROLLBAR_WIDTH,
 						   barLength,
 						   SCROLLER_SCROLLBAR_RADIUS);
-		rr.fill(m_ItemsArea, ColorPixelProvider(SCROLLER_SCROLLBAR_COLOR));
+		rr.fill(m_ItemsArea, Unicolor(SCROLLER_SCROLLBAR_COLOR));
 	}
 
 	if (scrollAreaWidth() < virtualWidth())
@@ -182,14 +182,14 @@ void List::__draw(DrawableCanvas& canvas)
 						   barLength,
 						   SCROLLER_SCROLLBAR_WIDTH,
 						   SCROLLER_SCROLLBAR_RADIUS);
-		rr.fill(m_ItemsArea, ColorPixelProvider(SCROLLER_SCROLLBAR_COLOR));
+		rr.fill(m_ItemsArea, Unicolor(SCROLLER_SCROLLBAR_COLOR));
 	}
 
 
 	if (m_BorderSize > 0)
 	{
 		RoundRectangle rr(0, 0, canvas.m_Width, canvas.m_Height, m_BorderRadius);
-		rr.drawContour(canvas, ColorPixelProvider(m_BorderColor), m_BorderSize);
+		rr.drawContour(canvas, Unicolor(m_BorderColor), m_BorderSize);
 	}
 }
 

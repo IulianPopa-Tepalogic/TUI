@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include <gfx/PixelColorProvider.h>
 #include "hiros_gui_base.h"
 
-#include "PixelProvider.h"
 
 class Canvas
 {
@@ -24,8 +24,8 @@ public:
 	virtual Pixel getPixel (int h, int v) const = 0;
 
 	void setPixel (int h, int v, Pixel pixel, float luminescence) const;
-	void setPixel (int h, int v, const PixelProvider& provider) const { return setPixel (h, v, provider.get(h, v)); }
-	void setPixel (int h, int v, const PixelProvider& provider, float luminescence) const { return setPixel(h, v, provider.get(h, v), luminescence); }
+	void setPixel (int h, int v, const PixelColorProvider& provider) const { return setPixel (h, v, provider.get(h, v)); }
+	void setPixel (int h, int v, const PixelColorProvider& provider, float luminescence) const { return setPixel(h, v, provider.get(h, v), luminescence); }
 
 
 	const uint16_t m_Width;

@@ -62,7 +62,7 @@ void TextItemsIllustrator::draw(DrawableCanvas& area, unsigned int itemIdx, Role
 							: (role == CHOOSED_ITEM) ? CHOOSER_ITEM_BK_COLOR : LIST_HEADER_ITEM_BK_COLOR;
 
 	Rectangle rect(0, 0, area.m_Width, area.m_Height);
-	rect.fill(area, ColorPixelProvider(bkColor));
+	rect.fill(area, Unicolor(bkColor));
 
 	if (item == nullptr)
 		return ;
@@ -89,5 +89,5 @@ void TextItemsIllustrator::draw(DrawableCanvas& area, unsigned int itemIdx, Role
 						 : (role == SELECTED_ITEM)
 						   ? LIST_SELECTED_ITEM_COLOR
 						   : (role == CHOOSED_ITEM) ? CHOOSER_ITEM_COLOR : LIST_HEADER_ITEM_COLOR;
-	area.writeText(text, font, ColorPixelProvider(color), htext, vtext, fontSize, false);
+	area.writeText(text, font, Unicolor(color), htext, vtext, fontSize, false);
 }
