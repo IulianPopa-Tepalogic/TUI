@@ -5,13 +5,11 @@
  *      Author: IulianPopa
  */
 
-#ifndef PIXELPROVIDER_H_
-#define PIXELPROVIDER_H_
-
+#pragma once
 
 #include <algorithm>
 
-#include "hiros_gui_base.h"
+#include "tui_gui_base.h"
 #include "ColorGradient.h"
 
 class Shape;
@@ -173,6 +171,3 @@ public:
 	const bool m_RepeatedVertically;
 	const bool m_Stretch;
 };
-
-
-#endif /* PIXELPROVIDER_H_ */

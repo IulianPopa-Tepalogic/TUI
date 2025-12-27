@@ -13,8 +13,9 @@
 
 #include "gfx/DrawableCanvas.h"
 
-
 using namespace std;
+using namespace tui;
+
 
 static bool default_event_filter(unsigned int event, int, int, void*)
 {

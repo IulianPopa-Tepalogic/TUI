@@ -14,6 +14,7 @@
 #include "gui/GUIApp.h"
 
 using namespace std;
+using namespace tui;
 
 Scroller::Scroller(unsigned int h, unsigned int v, unsigned int width, unsigned int height)
 	: Control(h, v, width, height),

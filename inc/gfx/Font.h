@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#include "hiros_hwconfig.h"
+#include "tui_hwconfig.h"
 
 struct Font {
 public:
@@ -32,6 +32,6 @@ public:
 	const uint8_t *const charactersBitmaps;
 
 	Character getCharacter(unsigned int unicode) const;
-	unsigned int getStringWidth(const USER_CHAR* text) const;
-	unsigned int getStringMaxHeight(const USER_CHAR* text) const;
+	unsigned int getStringWidth(const TUI_CHAR* text) const;
+	unsigned int getStringMaxHeight(const TUI_CHAR* text) const;
 };

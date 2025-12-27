@@ -14,6 +14,7 @@
 #include "gfx/RoundRectangle.h"
 
 using namespace std;
+using namespace tui;
 
 List::List(bool vertical, unsigned int h, unsigned int v, unsigned int width, unsigned int height, unsigned int spacing)
 	: Scroller (h, v, width, height),

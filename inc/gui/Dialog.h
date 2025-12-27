@@ -10,7 +10,7 @@
 
 #include <functional>
 
-#include "hiros_mutex.h"
+#include "tui_mutex.h"
 
 #include "GUIApp.h"
 #include "gfx/Fragment.h"
@@ -26,12 +26,12 @@ class Dialog : public ControlsHandler {
 	using CONTROL_CALL_BACK = void(Control& control, const CONTROL_EVENT event);
 
 public:
-	explicit Dialog(const USER_CHAR* title);
+	explicit Dialog(const TUI_CHAR* title);
 	virtual ~Dialog() = default;
 
 	void updateCanvas(DrawableCanvas& canvas, unsigned int h = 0, unsigned int v = 0, unsigned int width = 0, unsigned int height = 0);
 
-	Dialog& setTitle(const USER_CHAR* title);
+	Dialog& setTitle(const TUI_CHAR* title);
 	Dialog& setTitleBackgroundColor(Pixel color);
 	Dialog& setTitleBackgroundPattern(const Canvas* canvas);
 	Dialog& setBackgroundColor(Pixel color);
@@ -66,7 +66,7 @@ protected:
 
 	Fragment m_UserArea;
 
-	const USER_CHAR* m_Title = nullptr;
+	const TUI_CHAR* m_Title = nullptr;
 	const Canvas* m_BackgroundPattern = DIALOG_TITLE_BK_PATTERN;
 	const Canvas* m_TitleBackgroundPattern = DIALOG_BK_PATTERN;
 	uint8_t m_BorderSize = DIALOG_BORDER_SIZE;

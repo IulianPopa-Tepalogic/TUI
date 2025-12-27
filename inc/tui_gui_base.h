@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "hiros_hwconfig.h"
+#include "tui_hwconfig.h"
 
-bool hiros_qui_initialize();
+bool tui_qui_initialize();
 
 
 void updateScreen();

@@ -14,10 +14,10 @@
 
 class Button: public Control {
 public:
-	Button(const USER_CHAR* text = nullptr, unsigned int h = 0, unsigned int v = 0, unsigned int width = 0, unsigned int height = 0);
+	Button(const TUI_CHAR* text = nullptr, unsigned int h = 0, unsigned int v = 0, unsigned int width = 0, unsigned int height = 0);
 	virtual ~Button() = default;
 
-	Button& setText(const USER_CHAR* text);
+	Button& setText(const TUI_CHAR* text);
 	Button& setFont(Font& font);
 	Button& setSize(float size, bool pressed);
 	Button& setTextColor(const Pixel color, bool pressed);
@@ -34,7 +34,7 @@ public:
 	bool handleUserInteractionEvent(unsigned int event, int h, int v) override;
 
 protected:
-	const USER_CHAR* m_Text;
+	const TUI_CHAR* m_Text;
 	Font* m_Font = &BUTTON_TEXT_FONT;
 
 	const Canvas* m_BkPattern = BUTTON_BK_PATTERN;

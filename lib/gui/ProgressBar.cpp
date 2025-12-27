@@ -12,6 +12,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace tui;
 
 
  ProgressBar::ProgressBar(bool vertical, unsigned int h, unsigned int v, unsigned int width, unsigned int height)

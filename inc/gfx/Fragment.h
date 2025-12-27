@@ -4,13 +4,12 @@
  *  Created on: Jun 13, 2020
  *      Author: IulianPopa
  */
-
-#ifndef GFX_FRAGMENT_H_
-#define GFX_FRAGMENT_H_
+#pragma once
 
 #include <gfx/DrawableCanvas.h>
 
 class Fragment : public DrawableCanvas {
+
 public:
 	Fragment(int hfrom = 0, int vfrom = 0, int width = 0, int height = 0, DrawableCanvas* parent = nullptr);
 	virtual ~Fragment() = default;
@@ -34,5 +33,3 @@ protected:
 	int16_t m_HFrom;
 	int16_t m_VFrom;
 };
-
-#endif /* GFX_FRAGMENT_H_ */

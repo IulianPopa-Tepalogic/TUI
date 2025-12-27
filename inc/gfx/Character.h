@@ -5,14 +5,13 @@
  *      Author: IulianPopa
  */
 
-#ifndef GFX_CHARACTER_H_
-#define GFX_CHARACTER_H_
+#pragma once
 
 #include "gfx/Canvas.h"
 #include "gfx/Font.h"
 
-
 class Character: public Canvas {
+
 public:
 	Character(const Font::Character& c)
 		: Canvas(c.width, c.height),
@@ -31,5 +30,3 @@ protected:
 	const uint8_t* const m_Bitmap;
 	const uint8_t m_WidthBytes;
 };
-
-#endif /* GFX_CHARACTER_H_ */

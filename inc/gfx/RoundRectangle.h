@@ -5,8 +5,7 @@
  *      Author: IulianPopa
  */
 
-#ifndef GFX_ROUNDRECTANGLE_H_
-#define GFX_ROUNDRECTANGLE_H_
+#pragma once
 
 #include <gfx/Shape.h>
 
@@ -30,5 +29,3 @@ public:
 protected:
 	uint8_t m_Radius;
 };
-
-#endif /* GFX_ROUNDRECTANGLE_H_ */

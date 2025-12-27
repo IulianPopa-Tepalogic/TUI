@@ -12,8 +12,8 @@
 #include "gui/GUIApp.h"
 #include "gfx/RoundRectangle.h"
 
-
 using namespace std;
+using namespace tui;
 
 Chooser::Chooser(unsigned int h, unsigned int v, unsigned int width, unsigned int height)
 	: List(true, h, v, width, height)

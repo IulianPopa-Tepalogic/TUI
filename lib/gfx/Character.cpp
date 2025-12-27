@@ -7,7 +7,7 @@
 
 #include "gfx/Character.h"
 
-
+using namespace std;
 
 void Character::setPixel (int h, int v, Pixel pixel) const
 {

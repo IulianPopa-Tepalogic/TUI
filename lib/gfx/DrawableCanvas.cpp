@@ -14,7 +14,6 @@
 
 using namespace std;
 
-
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel) const
 {
 	if (hfrom == hto)
@@ -817,9 +816,9 @@ void DrawableCanvas::stretchCanvas(const Canvas& canvas, int hto, int vto, int w
 	}
 }
 
-void DrawableCanvas::writeText(const USER_CHAR* string, const Font& font, const PixelColorProvider& color, int hto, int vto, float multiply, bool vertically) const
+void DrawableCanvas::writeText(const TUI_CHAR* string, const Font& font, const PixelColorProvider& color, int hto, int vto, float multiply, bool vertically) const
 {
-	for (const USER_CHAR *ch = string; *ch != 0; ++ch)
+	for (const TUI_CHAR *ch = string; *ch != 0; ++ch)
 	{
 		const Character chCanvas(font.getCharacter((unsigned int)*ch));
 		drawLetter(chCanvas, color, hto, vto, multiply);

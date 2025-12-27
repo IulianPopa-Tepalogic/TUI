@@ -12,8 +12,9 @@
 #include "gfx/RoundRectangle.h"
 
 using namespace std;
+using namespace tui;
 
-Label::Label(const USER_CHAR* text, unsigned int h, unsigned int v, unsigned int width, unsigned int height)
+Label::Label(const TUI_CHAR* text, unsigned int h, unsigned int v, unsigned int width, unsigned int height)
 	: Control(h, v, width, height),
 	  m_Text(text)
 {
@@ -24,7 +25,7 @@ Label::Label(const USER_CHAR* text, unsigned int h, unsigned int v, unsigned int
 		setHeight(ceil(m_Font->getStringMaxHeight(text) * m_Size + 3.0f));
 }
 
-Label& Label::setText(const USER_CHAR* text)
+Label& Label::setText(const TUI_CHAR* text)
 {
 	m_Text = text;
 	markDirty();

@@ -15,14 +15,14 @@
 
 
 using namespace std;
-
+using namespace tui;
 
 static void default_event_callback(Control& control, const CONTROL_EVENT event)
 {
 	//Do nothing!
 }
 
-Dialog::Dialog(const USER_CHAR* title)
+Dialog::Dialog(const TUI_CHAR* title)
 	: m_Title(title),
 	  mf_ControlEventCallback(default_event_callback)
 {
@@ -47,7 +47,7 @@ void Dialog::updateCanvas(DrawableCanvas& canvas, unsigned int h, unsigned int v
 	m_NeedsRedraw = true;
 }
 
-Dialog& Dialog::setTitle(const USER_CHAR* title)
+Dialog& Dialog::setTitle(const TUI_CHAR* title)
 {
 	m_Title = title;
 	m_NeedsRedraw = true;

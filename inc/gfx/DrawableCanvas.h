@@ -42,7 +42,7 @@ public:
 	virtual void fillMaskPatern(const Canvas& canvas, const Pixel maskColor, bool repeatHorizontally = true, bool repeatVertically = true) const;
 	virtual void stretchCanvas(const Canvas& canvas, int hto = 0, int vto = 0, int width = 0, int height = 0) const;
 
-	virtual void writeText(const USER_CHAR* string, const Font& font, const PixelColorProvider& provider, int hto = 0, int vto = 0, float multiply = 1.0f, bool vertically = false) const;
+	virtual void writeText(const TUI_CHAR* string, const Font& font, const PixelColorProvider& provider, int hto = 0, int vto = 0, float multiply = 1.0f, bool vertically = false) const;
 
 	virtual void startFrameDrawing();
 	virtual void endFrameDrawing();
@@ -51,4 +51,3 @@ protected:
 	void drawLetter(const Character& c, const PixelColorProvider& color, int hto, int vto, float multiply) const;
 	constexpr int pixelPos(const int h, const int v) const { return v * m_Width + h; }
 };
-

@@ -8,8 +8,8 @@
 #ifndef ANIMATION_H_
 #define ANIMATION_H_
 
-#include "hiros_hwconfig.h"
-#include "hiros_mutex.h"
+#include "tui_hwconfig.h"
+#include "tui_mutex.h"
 
 
 class AnimationKeeper;

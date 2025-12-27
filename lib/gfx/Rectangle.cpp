@@ -7,6 +7,8 @@
 
 #include "gfx/Rectangle.h"
 
+using namespace std;
+
 Rectangle::Rectangle(uint16_t h, uint16_t v, uint16_t width, uint16_t height)
 	: Shape()
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "hiros_hwconfig.h"
+#include "tui_hwconfig.h"
 
 class ItemsModel {
 public:
@@ -25,7 +25,7 @@ public:
 
 class StringsModel : public ItemsModel {
 public:
-	using ENTRY = USER_CHAR*;
+	using ENTRY = TUI_CHAR*;
 
 	StringsModel(ENTRY* entries, size_t entriesCapacity, size_t entriesUsed = 0);
 	virtual ~StringsModel() = default;

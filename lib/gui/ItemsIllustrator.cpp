@@ -10,6 +10,9 @@
 #include "gfx/Rectangle.h"
 #include "gui_theme_constants.h"
 
+using namespace std;
+using namespace tui;
+
 unsigned int ItemsIllustrator::getRecommendedWidth(unsigned int itemIdx, Role role, const void* item)
 {
 	return 0;
@@ -44,7 +47,7 @@ unsigned int TextItemsIllustrator::getRecommendedWidth(unsigned int itemIdx, Rol
 	if (item == nullptr)
 		return 0;
 
-	auto text = reinterpret_cast<const USER_CHAR*>(item);
+	auto text = reinterpret_cast<const TUI_CHAR*>(item);
 	return getUsedFont(role).getStringWidth(text) * getUsedFontSize(role);
 }
 
@@ -67,7 +70,7 @@ void TextItemsIllustrator::draw(DrawableCanvas& area, unsigned int itemIdx, Role
 	if (item == nullptr)
 		return ;
 
-	auto text = reinterpret_cast<const USER_CHAR*>(item);
+	auto text = reinterpret_cast<const TUI_CHAR*>(item);
 
 	const auto fontSize = getUsedFontSize(role);
 	const auto& font = getUsedFont(role);

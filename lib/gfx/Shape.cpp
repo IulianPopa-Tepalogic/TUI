@@ -9,9 +9,7 @@
 
 #include <algorithm>
 
-
 using namespace std;
-
 
 void Shape::fill(const DrawableCanvas& canvas, const PixelColorProvider& pixel)
 {

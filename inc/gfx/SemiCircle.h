@@ -32,4 +32,3 @@ protected:
 	int16_t m_VCenter;
 	uint16_t m_Radius;
 };
-

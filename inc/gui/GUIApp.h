@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "hiros_mutex.h"
+#include "tui_mutex.h"
 
 class Dialog;
 class DrawableCanvas;

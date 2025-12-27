@@ -9,6 +9,8 @@
 
 #include <algorithm>
 
+using namespace std;
+
 static const uint8_t spaceBitmap[16] = {0, };
 static const uint8_t noCharacterBitmap[16] = {
 		0b0, 0b0, 0b0, 0b11111111, 0b11000011, 0b10100101, 0b10011001, 0b10010001, 0b10011001, 0b10100101, 0b11000011, 0b11111111,
@@ -35,13 +37,13 @@ Font::Character Font::getCharacter(unsigned int unicode) const
 }
 
 
-unsigned int Font::getStringWidth(const USER_CHAR* text) const
+unsigned int Font::getStringWidth(const TUI_CHAR* text) const
 {
 	unsigned int result = 0;
 	unsigned int charsCount = 0;
 	while (*text != 0)
 	{
-		USER_CHAR ch = *text++;
+		TUI_CHAR ch = *text++;
 		if (ch == ' ')
 		{
 			result += spaceWidth;
@@ -61,12 +63,12 @@ unsigned int Font::getStringWidth(const USER_CHAR* text) const
 	return result + ((charsCount > 0) ? charsCount - 1 : 0);
 }
 
-unsigned int Font::getStringMaxHeight(const USER_CHAR* text) const
+unsigned int Font::getStringMaxHeight(const TUI_CHAR* text) const
 {
 	unsigned int result = 0;
 	while (*text != 0)
 	{
-		USER_CHAR ch = *text++;
+		TUI_CHAR ch = *text++;
 		if ((ch == ' ')
 			|| (ch < baseCharacter))
 		{

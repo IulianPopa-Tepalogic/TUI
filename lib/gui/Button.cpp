@@ -13,10 +13,10 @@
 #include "gui/GUIApp.h"
 #include "gui/Dialog.h"
 
-
 using namespace std;
+using namespace tui;
 
-Button::Button(const USER_CHAR* text, unsigned int h, unsigned int v, unsigned int width, unsigned int height)
+Button::Button(const TUI_CHAR* text, unsigned int h, unsigned int v, unsigned int width, unsigned int height)
 	: Control(h, v, width, height),
 	  m_Text((text != nullptr) ? text : "")
 {
@@ -39,7 +39,7 @@ Button::Button(const USER_CHAR* text, unsigned int h, unsigned int v, unsigned i
 	}
 }
 
-Button& Button::setText(const USER_CHAR* text)
+Button& Button::setText(const TUI_CHAR* text)
 {
 	m_Text = text;
 	markDirty();

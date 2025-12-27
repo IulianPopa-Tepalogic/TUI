@@ -10,6 +10,8 @@
 #include <gfx/RoundRectangle.h>
 #include <gui/Dialog.h>
 
+using namespace std;
+using namespace tui;
 
  Slider::Slider(bool vertical, unsigned int h, unsigned int v, unsigned int width, unsigned int height)
  	 : Control(h, v, width, height),

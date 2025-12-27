@@ -7,6 +7,7 @@
 
 #include "gfx/ColorGradient.h"
 
+using namespace std;
 
 Pixel ColorGradient::Interpolate(int offset, int wide) const
 {

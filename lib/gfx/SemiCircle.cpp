@@ -13,7 +13,6 @@
 
 using namespace std;
 
-
 SemiCircle::SemiCircle(int16_t hcenter, int16_t vcenter, uint16_t radius, float fromDegCW, float endDegCW)
 	: Shape()
 {

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "tos.h"
+namespace tui {
 
 enum PIXEL_COLOR_ENCODINGS {
 	UNDEFINED = 0,
@@ -50,32 +50,33 @@ struct Pixel_RGB565 {
 	static constexpr uint8_t BITS_PER_PIXEL = 16;
 };
 
+static constexpr uint16_t SCREEN_WIDTH_SIZE  = 480;
+static constexpr uint16_t SCREEN_HEIGHT_SIZE = 272;
+static constexpr bool 	  SCREEN_USE_DOUBLE_BUFFERING = true;
+static constexpr uint8_t  AA_SAMPLING = 4;
+
+static constexpr bool 	  USE_SIN_CACHE = false;
+static constexpr bool 	  USE_COS_CACHE = false;
+
+}
+
 #define USED_COLOR_ENCODING RGB565
 
 #define __PixelPaste(e) Pixel_ ## e
 #define __PixelEval(e) __PixelPaste(e)
 #define Pixel __PixelEval(USED_COLOR_ENCODING)
 
-static constexpr uint16_t SCREEN_WIDTH_SIZE = 480;
-static constexpr uint16_t SCREEN_HEIGHT_SIZE = 272;
-static constexpr bool SCREEN_USE_DOUBLE_BUFFERING = true;
+static constexpr tui::PIXEL_COLOR_ENCODINGS tui::HW_COLOR_ENCODE = USED_COLOR_ENCODING;
 
-static constexpr PIXEL_COLOR_ENCODINGS HW_COLOR_ENCODE = USED_COLOR_ENCODING;
+typedef char TUI_CHAR;
 
-static constexpr bool USE_SIN_CACHE = false;
-static constexpr bool USE_COS_CACHE = false;
+#define TUI_MUTEX mutex
+#define TUI_MUTEX_LOCK(m) lock(m)
+#define TUI_MUTEX_TRY_LOCK(m, msTmo) try_lock(m, tos_ms2ticks(msTmo))
+#define TUI_MUTEX_UNLOCK(m) unlock(m)
 
-typedef char USER_CHAR;
+#define TUI_TICKS() ticks()
+#define TUI_TICKS_2_MS(t) ticks2ms(t)
+#define TUI_MS_2_TICKS(m) ms2ticks(m)
 
-#define HIROS_MUTEX TOS_MUTEX
-#define HIROS_MUTEX_LOCK(m) tos_lock_mutex(m)
-#define HIROS_MUTEX_TRY_LOCK(m, msTmo) tos_try_lock_mutex(m, tos_ms2ticks(msTmo))
-#define HIROS_MUTEX_UNLOCK(m) tos_unlock_mutex(m)
-
-
-#define HIROS_TICKS() tos_ticks()
-#define HIROS_TICKS_2_MS(t) tos_ticks2ms(t)
-#define HIROS_MS_2_TICKS(m) tos_ms2ticks(m)
-
-#define HIROS_DIE() tos_critical_fault()
-
+#define TUI_DIE() tos_critical_fault()

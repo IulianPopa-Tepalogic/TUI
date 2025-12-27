@@ -9,6 +9,8 @@
 
 using namespace std;
 
+using namespace std;
+
 void MemoryImage::setPixel (int h, int v, Pixel pixel) const
 {
 	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))

@@ -7,6 +7,8 @@
 
 #include <gui/ControlsContainers.h>
 
+using namespace std;
+using namespace tui;
 
 void ControlsContainerModel::draw(DrawableCanvas& canvas, int width, int height)
 {
@@ -43,23 +45,23 @@ ControlsContainer::ControlsContainer(ControlsContainerModel* model, unsigned int
 
 void ControlsContainer::processControlEvent(Control& control, const CONTROL_EVENT event)
 {
-	HIROS_DIE();
+	TUI_DIE();
 }
 
 
 void ControlsContainer::promoteControl(Control& control)
 {
-	HIROS_DIE();
+	TUI_DIE();
 }
 
 void ControlsContainer::removeControl(Control& control)
 {
-	HIROS_DIE();
+	TUI_DIE();
 }
 
 void ControlsContainer::addControl(Control& control)
 {
-	HIROS_DIE();
+	TUI_DIE();
 }
 
 
@@ -69,7 +71,7 @@ void ControlsContainer::setModel(ControlsContainerModel* model)
 		m_ControlModel->m_AssociatedContainer = nullptr;
 
 	if (model->m_AssociatedContainer != nullptr)
-		HIROS_DIE();
+		TUI_DIE();
 
 	model->m_AssociatedContainer = this;
 	modelUpdated();

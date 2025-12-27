@@ -5,8 +5,7 @@
  *      Author: IulianPopa
  */
 
-#ifndef GFX_MEMORYCANVAS_H_
-#define GFX_MEMORYCANVAS_H_
+#pragma once
 
 #include "gfx/DrawableCanvas.h"
 
@@ -31,5 +30,3 @@ protected:
 
 	mutable Pixel* m_Buffer;
 };
-
-#endif /* GFX_MEMORYCANVAS_H_ */

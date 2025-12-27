@@ -8,7 +8,7 @@
 #pragma once
 
 #include <gfx/PixelColorProvider.h>
-#include "hiros_gui_base.h"
+#include "tui_gui_base.h"
 
 
 class Canvas

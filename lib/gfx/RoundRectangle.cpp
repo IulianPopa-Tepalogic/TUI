@@ -21,8 +21,6 @@ RoundRectangle::RoundRectangle(uint16_t h, uint16_t v, uint16_t width, uint16_t 
 	setHeight(height);
 }
 
-
-
 float RoundRectangle::isPositionInActiveRegion(int16_t h, int16_t v)
 {
 	if ((h < m_HStart) || ((m_HStart + m_Width) <= h))

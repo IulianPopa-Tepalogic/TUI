@@ -1,5 +1,5 @@
 /*
- * hiros_screen.cpp
+ * TUI_screen.cpp
  *
  *  Created on: May 15, 2020
  *      Author: IulianPopa
@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <memory.h>
-#include "hiros_gui_base.h"
+#include "TUI_gui_base.h"
 #include "MathCalcs.h"
 
 using namespace std;
@@ -15,7 +15,7 @@ using namespace std;
 static uint8_t* sgMainBuffer;
 static uint8_t* sgWorkBuffer;
 
-bool hiros_qui_initialize()
+bool TUI_qui_initialize()
 {
 	MathCalcs::InitCaches();
 

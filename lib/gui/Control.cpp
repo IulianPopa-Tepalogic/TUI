@@ -18,6 +18,7 @@
 
 
 using namespace std;
+using namespace tui;
 
 
 static bool rectanle_holds_point(unsigned int rhfrom,
@@ -183,7 +184,7 @@ Animation* Control::animateProperty(Animation::PROPERTY property, float fromValu
 	animation->m_TYPE = type;
 	animation->m_LoopingMode = mode;
 
-	animation->prepareAnimation(HIROS_MS_2_TICKS(pendMs), HIROS_MS_2_TICKS(lenghtMs), fromValue, toValue);
+	animation->prepareAnimation(TUI_MS_2_TICKS(pendMs), TUI_MS_2_TICKS(lenghtMs), fromValue, toValue);
 
 	return animation;
 }
@@ -220,7 +221,7 @@ Animation* Control::animateProperty(Animation::PROPERTY property, Pixel fromValu
 	animation->m_TYPE = type;
 	animation->m_LoopingMode = mode;
 
-	animation->prepareAnimation(HIROS_MS_2_TICKS(pendMs), HIROS_MS_2_TICKS(lenghtMs), fromValue, toValue);
+	animation->prepareAnimation(TUI_MS_2_TICKS(pendMs), TUI_MS_2_TICKS(lenghtMs), fromValue, toValue);
 
 	return animation;
 }

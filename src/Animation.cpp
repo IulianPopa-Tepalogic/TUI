@@ -35,7 +35,7 @@ Animation::Animation()
 
 void Animation::prepareAnimation(int pendTicks, int lengthTicks, Pixel fromColor, Pixel toColor)
 {
-	const auto tick = HIROS_TICKS();
+	const auto tick = TUI_TICKS();
 
 	m_StartTick = m_InterpolationTick = tick + pendTicks;
 	m_EndTick = tick + pendTicks + (lengthTicks == 0 ? 1 : lengthTicks);
@@ -46,7 +46,7 @@ void Animation::prepareAnimation(int pendTicks, int lengthTicks, Pixel fromColor
 
 void Animation::prepareAnimation(int pendTicks, int lengthTicks, float fromValue, float toValue)
 {
-	const auto tick = HIROS_TICKS();
+	const auto tick = TUI_TICKS();
 
 	m_StartTick = m_InterpolationTick = tick + pendTicks;
 	m_EndTick = tick + pendTicks + (lengthTicks == 0 ? 1 : lengthTicks);
@@ -57,7 +57,7 @@ void Animation::prepareAnimation(int pendTicks, int lengthTicks, float fromValue
 
 void Animation::tick(Control* control)
 {
-	const uint32_t ticks = HIROS_TICKS();
+	const uint32_t ticks = TUI_TICKS();
 	float raport = min(max<float>(ticks - m_StartTick, .0f) / (m_EndTick - m_StartTick), 1.0f);
 
 	switch (m_TYPE)

@@ -7,6 +7,7 @@
 
 #include "gfx/Fragment.h"
 
+using namespace std;
 
 Fragment::Fragment(int hfrom, int vfrom, int width, int height, DrawableCanvas* parent)
 	: DrawableCanvas(width, height)

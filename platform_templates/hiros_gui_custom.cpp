@@ -1,11 +1,11 @@
 /*
- * hiros_gui_custom.cpp
+ * TUI_gui_custom.cpp
  *
  *  Created on: May 16, 2020
  *      Author: IulianPopa
  */
 
-#include <hiros_gui_base.h>
+#include <TUI_gui_base.h>
 
 #include "bsp/bsp.h"
 #include "tos.h"
