@@ -10,24 +10,18 @@
 #include "tui_hwconfig.h"
 
 bool tui_qui_initialize();
+void tui_update_screen();
 
-
-void updateScreen();
-void* getWorkingBuffer();
 /*
  *  Platform dependent function!
  * This needs to be implemented according to the used platform.
  * Should not be called directly by users.
  */
 
-void implSignalStartFrameDrawing();
-void implSignalEndFrameDrawing();
-void implSignalFrameConsumed();
-
-void* implGetDrawMainBuffer();
-void* implGetDrawWorkingBuffer();
-void implCommitScreen(void* screen);
+void* __tui_get_draw_buffer();
+void* __tui_get_shadow_buffer();
+void  __tui_commit_shadow_buffer();
 
 
-void implWarning(const char* msg = nullptr);
-void implError(const char* msg = nullptr);
+void __tui_warning(const char* msg = nullptr);
+void __tui_error(const char* msg = nullptr);

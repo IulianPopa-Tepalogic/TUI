@@ -20,7 +20,7 @@ public:
 	{}
 	virtual ~Canvas() = default;
 
-	virtual void setPixel (int h, int v, Pixel pixel) const = 0;
+	virtual void setPixel (int h, int v, const Pixel& pixel) const = 0;
 	virtual Pixel getPixel (int h, int v) const = 0;
 
 	void setPixel (int h, int v, Pixel pixel, float luminescence) const;

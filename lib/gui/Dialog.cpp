@@ -38,7 +38,7 @@ void Dialog::updateCanvas(DrawableCanvas& canvas, unsigned int h, unsigned int v
 		m_Height = canvas.m_Height;
 
 	if (m_Height < DIALOG_TITLE_HEIGHT)
-		implError();
+		__tui_error();
 
 	m_Width = width;
 	if (m_Width <= 0)
@@ -208,7 +208,7 @@ bool Dialog::tickAnimations()
 bool Dialog::drawDialogFrame()
 {
 	if (m_Canvas == nullptr)
-		implError();
+		__tui_error();
 
 	m_Canvas->fillColor(Pixel(0, 0, 0));
 	if (DIALOG_BORDER_SIZE >= 0)

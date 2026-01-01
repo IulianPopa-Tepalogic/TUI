@@ -18,13 +18,13 @@ public:
 
 	virtual ~MemoryImage() = default;
 
-	void setPixel (int h, int v, Pixel pixel) const override;
+	void setPixel (int h, int v, const Pixel& pixel) const override;
 	Pixel getPixel (int h, int v) const override;
 
 	void copyHorizontal(int hfrom, int vfrom, unsigned int width, int hto, int vto) const override;
 	void copyVertical(int hfrom, int vfrom, unsigned int height, int hto, int vto) const override;
 
-	void fillColor(Pixel color) const override;
+	void fillColor(const Pixel& color) const override;
 
 protected:
 

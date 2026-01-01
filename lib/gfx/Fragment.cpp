@@ -18,7 +18,7 @@ Fragment::Fragment(int hfrom, int vfrom, int width, int height, DrawableCanvas* 
 	UpdateArea(hfrom, vfrom, width, height);
 }
 
-void Fragment::setPixel (int h, int v, Pixel pixel) const
+void Fragment::setPixel (int h, int v, const Pixel& pixel) const
 {
 	if ((v < 0 ) || (h < 0) || (v >= m_Height) || (h >= m_Width) || (m_Canvas == nullptr))
 		return;
@@ -95,16 +95,3 @@ bool Fragment::overlaps(const Fragment& other) const
 
 	return true;
 }
-
-void Fragment::startFrameDrawing()
-{
-	if (m_Canvas != nullptr)
-		m_Canvas->startFrameDrawing();
-}
-
-void Fragment::endFrameDrawing()
-{
-	if (m_Canvas != nullptr)
-		m_Canvas->endFrameDrawing();
-}
-

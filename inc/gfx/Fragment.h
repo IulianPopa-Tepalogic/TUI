@@ -14,7 +14,7 @@ public:
 	Fragment(int hfrom = 0, int vfrom = 0, int width = 0, int height = 0, DrawableCanvas* parent = nullptr);
 	virtual ~Fragment() = default;
 
-	void setPixel (int h, int v, Pixel pixel) const override;
+	void setPixel (int h, int v, const Pixel& pixel) const override;
 	Pixel getPixel (int h, int v) const override;
 
 	void UpdateCanvas(DrawableCanvas& canvas);
@@ -23,9 +23,6 @@ public:
 	bool overlaps(const Fragment& other) const;
 	unsigned int horizontal() const { return m_HFrom; }
 	unsigned int vertical() const { return m_VFrom; }
-
-	void startFrameDrawing() override;
-	void endFrameDrawing() override;
 
 protected:
 

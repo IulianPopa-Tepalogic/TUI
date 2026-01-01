@@ -698,7 +698,7 @@ void DrawableCanvas::drawMaskCanvas(const Canvas& canvas, const Pixel maskColor,
 		}
 }
 
-void DrawableCanvas::fillColor(Pixel color) const
+void DrawableCanvas::fillColor(const Pixel& color) const
 {
 	for (unsigned int v = 0; v < m_Height; v++)
 		for (unsigned int h = 0; h < m_Width; h++)
@@ -862,13 +862,4 @@ void DrawableCanvas::drawLetter(const Character& c, const PixelColorProvider& co
 		}
 	}
 }
-
-void DrawableCanvas::startFrameDrawing()
-{
-}
-
-void DrawableCanvas::endFrameDrawing()
-{
-}
-
 

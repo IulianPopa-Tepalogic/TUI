@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void Character::setPixel (int h, int v, Pixel pixel) const
+void Character::setPixel (int h, int v, const Pixel& pixel) const
 {
 }
 

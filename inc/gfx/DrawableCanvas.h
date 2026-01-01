@@ -37,15 +37,12 @@ public:
 
 	virtual void drawCanvas(const Canvas& canvas, int hto = 0, int vto = 0, int width = 0, int height = 0, Pixel skipColor = Pixel(), bool useSkipColor = false) const;
 	virtual void drawMaskCanvas(const Canvas& canvas, const Pixel maskColor, int hto = 0, int vto = 0, int width = 0, int height = 0) const;
-	virtual void fillColor(Pixel color) const;
+	virtual void fillColor(const Pixel& color) const;
 	virtual void fillPatern(const Canvas& canvas, bool repeatHorizontally  = true, bool repeatVertically = true, Pixel skipColor = Pixel(), bool useSkipColor = false) const;
 	virtual void fillMaskPatern(const Canvas& canvas, const Pixel maskColor, bool repeatHorizontally = true, bool repeatVertically = true) const;
 	virtual void stretchCanvas(const Canvas& canvas, int hto = 0, int vto = 0, int width = 0, int height = 0) const;
 
 	virtual void writeText(const TUI_CHAR* string, const Font& font, const PixelColorProvider& provider, int hto = 0, int vto = 0, float multiply = 1.0f, bool vertically = false) const;
-
-	virtual void startFrameDrawing();
-	virtual void endFrameDrawing();
 
 protected:
 	void drawLetter(const Character& c, const PixelColorProvider& color, int hto, int vto, float multiply) const;

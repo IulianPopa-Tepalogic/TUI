@@ -11,7 +11,7 @@ using namespace std;
 
 using namespace std;
 
-void MemoryImage::setPixel (int h, int v, Pixel pixel) const
+void MemoryImage::setPixel (int h, int v, const Pixel& pixel) const
 {
 	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))
 		return;
@@ -56,7 +56,7 @@ void  MemoryImage::copyVertical(int hfrom, int vfrom, unsigned int height, int h
 	}
 }
 
-void MemoryImage::fillColor(Pixel color) const
+void MemoryImage::fillColor(const Pixel& color) const
 {
 	const unsigned int count = (unsigned int)m_Width * m_Height;
 	for (unsigned int idx = 0; idx < count; ++idx)
