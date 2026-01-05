@@ -14,6 +14,90 @@
 
 using namespace std;
 
+
+
+void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color) const
+{
+	if (hfrom == hto)
+	{
+		const auto len = vto - vfrom;
+		drawVLine(hfrom, vfrom, len, 1, color);
+		return ;
+	}
+	else if (vfrom == vto)
+	{
+		const auto len = hto - hfrom;
+		drawHLine(hfrom, vfrom, len, 1, color);
+		return ;
+	}
+
+	const float hsize = fabs((float)(hfrom - hto));
+	const float vsize = fabs((float)(vfrom - vto));
+	if (vsize < hsize)
+	{
+		if (vto < vfrom)
+		{
+			swap(vto, vfrom);
+			swap(hto, hfrom);
+		}
+
+		const int direction = hfrom < hto ? 1 : -1;
+		const float segment = hsize / vsize;
+		const float step = (float)(vto - vfrom)/(hto - hfrom);
+
+		for (int h = hfrom, hcount = 0; h != hto; h += direction, ++hcount)
+		{
+			int v = vfrom + (hcount / segment);
+			const float linev = (h - hfrom) * step + vfrom;
+
+			float err = linev - v;
+			if (err < .0f)
+			{
+				err = -err;
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h, v - 1, color, err);
+			}
+			else
+			{
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h, v + 1, color, err);
+			}
+		}
+	}
+	else
+	{
+		if (hto < hfrom)
+		{
+			swap(vto, vfrom);
+			swap(hto, hfrom);
+		}
+
+		const int direction = vfrom < vto ? 1 : -1;
+		const float segment = vsize / hsize;
+		const float step = (float)(hto - hfrom)/(vto - vfrom);
+
+		for (int v = vfrom, vcount = 0; v != vto; v += direction, ++vcount)
+		{
+			int h = hfrom + (vcount / segment);
+			const float lineh = (v - vfrom) * step + hfrom;
+
+			float err = lineh - h;
+			if (err < .0f)
+			{
+				err = -err;
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h - 1, v, color, err);
+			}
+			else
+			{
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h + 1, v, color, err);
+			}
+		}
+	}
+}
+
+
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel) const
 {
 	if (hfrom == hto)
@@ -94,6 +178,118 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 		}
 	}
 }
+
+void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
+{
+	if (dashFill == 0)
+		return ;
+
+	if (hfrom == hto)
+	{
+		const auto len = vto - vfrom;
+		drawVLine(hfrom, vfrom, len, 1, color, dashFill, dashSkip);
+		return ;
+	}
+	else if (vfrom == vto)
+	{
+		drawHLine(hfrom, vfrom, hto - hfrom, 1, color, dashFill, dashSkip);
+		return ;
+	}
+
+	const float hsize = fabs((float)(hfrom - hto));
+	const float vsize = fabs((float)(vfrom - vto));
+	if (vsize < hsize)
+	{
+		if (vto < vfrom)
+		{
+			swap(vto, vfrom);
+			swap(hto, hfrom);
+		}
+
+		const int direction = hfrom < hto ? 1 : -1;
+		const float segment = hsize / vsize;
+		const float step = (float)(vto - vfrom)/(hto - hfrom);
+
+		auto fill = dashFill;
+		for (int h = hfrom, hcount = 0; (direction > 0 ? h < hto : hto < h); h += direction, ++hcount)
+		{
+			if (dashSkip > 0)
+			{
+				if (fill == 0)
+				{
+					hcount += (dashSkip - 1);
+					h += direction * (dashSkip - 1);
+					fill = dashFill;
+					continue;
+				}
+				else
+					fill--;
+			}
+
+			int v = vfrom + (hcount / segment);
+			const float linev = (h - hfrom) * step + vfrom;
+
+			float err = linev - v;
+			if (err < .0f)
+			{
+				err = -err;
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h, v - 1, color, err);
+			}
+			else
+			{
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h, v + 1, color, err);
+			}
+		}
+	}
+	else
+	{
+		if (hto < hfrom)
+		{
+			swap(vto, vfrom);
+			swap(hto, hfrom);
+		}
+
+		const int direction = vfrom < vto ? 1 : -1;
+		const float segment = vsize / hsize;
+		const float step = (float)(hto - hfrom)/(vto - vfrom);
+
+		auto fill = dashFill;
+		for (int v = vfrom, vcount = 0; (direction > 0 ? v < vto : vto < v); v += direction, ++vcount)
+		{
+			if (dashSkip > 0)
+			{
+				if (fill == 0)
+				{
+					vcount += (dashSkip - 1);
+					v += direction * (dashSkip - 1);
+					fill = dashFill;
+					continue;
+				}
+				else
+					fill--;
+			}
+
+			int h = hfrom + (vcount / segment);
+			const float lineh = (v - vfrom) * step + hfrom;
+
+			float err = lineh - h;
+			if (err < .0f)
+			{
+				err = -err;
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h - 1, v, color, err);
+			}
+			else
+			{
+				setPixel(h, v, color, 1.0f - err);
+				setPixel(h + 1, v, color, err);
+			}
+		}
+	}
+}
+
 
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
@@ -206,6 +402,23 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 	}
 }
 
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const Pixel& color) const
+{
+	if (length < 0)
+	{
+		length = -length;
+		clockWiseDeg += 180;
+	}
+
+	clockWiseDeg = MathCalcs::normalizeDeg(clockWiseDeg);
+
+	const auto hto = hfrom + MathCalcs::cos(clockWiseDeg) * length;
+	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
+
+	drawLine(hfrom, vfrom, hto, vto, color);
+}
+
+
 void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& pixel) const
 {
 	if (length < 0)
@@ -222,6 +435,24 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float cloc
 	drawLine(hfrom, vfrom, hto, vto, pixel);
 }
 
+
+void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
+{
+	if (length < 0)
+	{
+		length = -length;
+		clockWiseDeg += 180;
+	}
+
+	clockWiseDeg = MathCalcs::normalizeDeg(clockWiseDeg);
+
+	const auto hto = hfrom + MathCalcs::cos(clockWiseDeg) * length;
+	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
+
+	drawLine (hfrom, vfrom, hto, vto, color, dashFill, dashSkip);
+}
+
+
 void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
 	if (length < 0)
@@ -236,6 +467,38 @@ void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float cloc
 	const auto vto = vfrom + MathCalcs::sin(clockWiseDeg) * length;
 
 	drawLine (hfrom, vfrom, hto, vto, pixel, dashFill, dashSkip);
+}
+
+
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const Pixel& color) const
+{
+	if (hfrom < 0)
+	{
+		const auto off = -hfrom;
+		length -= off;
+		hfrom = 0;
+	}
+
+	if (vfrom < 0)
+	{
+		const int off = -vfrom;
+		vfrom = 0;
+
+		width -= off;
+	}
+
+	length = ((hfrom + length) < m_Width) ? length : (m_Width - hfrom);
+	width = ((vfrom + width) < m_Height) ? width : (m_Height - vfrom);
+
+	if ((length <= 0) || (width <= 0))
+		return;
+
+	int lineIdx = width;
+	while (--lineIdx >= 0) {
+		int i = length;
+		while (--i >= 0)
+			setPixel(hfrom + i, vfrom + lineIdx, color);
+	}
 }
 
 
@@ -278,6 +541,66 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 		for (int i = 0;  i < length; ++i)
 			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
 }
+
+
+void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
+{
+	if (dashFill == 0)
+		return ;
+
+	else if (dashSkip == 0)
+	{
+		drawHLine(hfrom, vfrom, length, width, color);
+		return ;
+	}
+
+	if (length < 0)
+	{
+		hfrom += length;
+		length = -length;
+	}
+
+	if (width < 0)
+	{
+		vfrom += width;
+		width = -width;
+	}
+
+	if (hfrom < 0)
+	{
+		const auto off = -hfrom;
+		length -= off;
+		hfrom = 0;
+	}
+
+	if (vfrom < 0)
+	{
+		const int off = -vfrom;
+		vfrom = 0;
+
+		width -= off;
+	}
+
+	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
+	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
+
+	auto fill = dashFill;
+	for (int lineIdx = 0; lineIdx < width; lineIdx++)
+		for (int i = 0;  i < length; ++i)
+		{
+			if (fill == 0)
+			{
+				i += dashSkip - 1;
+				fill = dashFill;
+				continue;
+			}
+			else
+				fill--;
+
+			setPixel(hfrom + i, vfrom + lineIdx, color);
+		}
+}
+
 
 void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
@@ -337,6 +660,38 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 		}
 }
 
+
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color) const
+{
+	if (vfrom < 0)
+	{
+		const int off = -vfrom;
+		vfrom = 0;
+		length -= off;
+	}
+
+	if (hfrom < 0)
+	{
+		const int off = -hfrom;
+		hfrom = 0;
+		width -= off;
+	}
+
+	length = ((vfrom + length) < m_Height) ? length : (m_Height - vfrom);
+	width = ((hfrom + width) < m_Width) ? width : (m_Width - hfrom);
+
+	if ((length <= 0) || (width <= 0))
+		return;
+
+	int lineIdx = width;
+	while (--lineIdx >= 0) {
+		int i = length;
+		while (--i >= 0)
+			setPixel(hfrom + lineIdx, vfrom + i, color);
+	}
+}
+
+
 void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel) const
 {
 	if (width < 0)
@@ -375,6 +730,70 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 		for (int i = 0;  i < length; ++i)
 			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
 }
+
+
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
+{
+	if (dashFill == 0)
+		return ;
+
+	else if (dashSkip == 0)
+	{
+		drawVLine(hfrom, vfrom, length, width, color);
+		return ;
+	}
+
+	if (width < 0)
+	{
+		hfrom -= width;
+		width = -width;
+	}
+
+	if (length < 0)
+	{
+		vfrom -= length;
+		length = -length;
+	}
+
+	if (vfrom < 0)
+	{
+		const int off = -vfrom;
+		vfrom = 0;
+		length -= off;
+	}
+
+	if (hfrom < 0)
+	{
+		const int off = -hfrom;
+		hfrom = 0;
+		width -= off;
+	}
+
+	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
+	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
+
+	if ((length <= 0) || (width <= 0))
+		return;
+
+	auto fill = dashFill;
+	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
+	{
+		for (int i = 0;  i < length; ++i)
+		{
+			if (fill == 0)
+			{
+				i += dashSkip - 1;
+				fill = dashFill;
+				continue;
+			}
+			else
+				fill--;
+
+			setPixel(hfrom + lineIdx, vfrom + i, color);
+		}
+	}
+}
+
 
 void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {

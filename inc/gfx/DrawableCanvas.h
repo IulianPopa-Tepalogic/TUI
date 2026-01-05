@@ -21,14 +21,30 @@ public:
 
 	virtual ~DrawableCanvas() = default;
 
+	virtual void drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color) const;
 	virtual void drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& provider) const;
+
+	virtual void drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
+
+	virtual void drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const Pixel& color) const;
 	virtual void drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& provider) const;
+
+	virtual void drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const PixelColorProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
+
+	virtual void drawHLine (int hfrom, int vfrom, int length, int width, const Pixel& color) const;
 	virtual void drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& provider) const;
+
+	virtual void drawHLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
+
+	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color) const;
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& provider) const;
+
+	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
+
 	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& provider, float startAngle = 0.0, float endAngle = 360.0) const;
 	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& provider, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const;
 

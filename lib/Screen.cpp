@@ -8,6 +8,7 @@
 
 using namespace std;
 
+
 Screen::Screen()
 	: MemoryImage(SCREEN_WIDTH_SIZE, SCREEN_HEIGHT_SIZE, nullptr)
 {
@@ -49,11 +50,11 @@ void Screen::flushFrame()
 		unsigned int count = TUI_TICKS_2_MS(m_FrameInterval);
 		m_FrameInterval = 0;
 
-		int fps = (count == 0) ? 1 : (1000 / count);
-		sprintf(str, "%02u fps", fps);
+		int fps = (count == 0) ? 1000 : (1000 / count);
+		sprintf(str, "%u fps", fps);
 
 		drawHLine(400, 18, 50, 17, Unicolor(0, 0, 0));
-		writeText(str, mss8pts, Unicolor(0xFF, 0xFF, 0xFF), 410, 22);
+		writeText(str, mss8pts, Unicolor(0xFF, 0xFF, 0xFF), 405, 22);
 	}
 
 	tui_update_screen();

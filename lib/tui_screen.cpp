@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 bool tui_qui_initialize()
 {
 	MathCalcs::InitCaches();
@@ -23,5 +24,3 @@ void tui_update_screen()
 {
 	__tui_commit_shadow_buffer();
 }
-
-

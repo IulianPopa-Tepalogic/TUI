@@ -7,7 +7,7 @@
 
 #include "gfx/MemoryImage.h"
 
-using namespace std;
+#include <bit>
 
 using namespace std;
 
@@ -58,9 +58,11 @@ void  MemoryImage::copyVertical(int hfrom, int vfrom, unsigned int height, int h
 
 void MemoryImage::fillColor(const Pixel& color) const
 {
-	const unsigned int count = (unsigned int)m_Width * m_Height;
-	for (unsigned int idx = 0; idx < count; ++idx)
-		m_Buffer[idx] = color;
+	auto dst = m_Buffer;
+	int count = m_Width * m_Height;
+	while (--count >= 0) {
+		*dst++ = color;
+	}
 }
 
 
