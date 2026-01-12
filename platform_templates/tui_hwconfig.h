@@ -79,4 +79,4 @@ typedef char TUI_CHAR;
 #define TUI_TICKS_2_MS(t) ticks2ms(t)
 #define TUI_MS_2_TICKS(m) ms2ticks(m)
 
-#define TUI_DIE() tos_critical_fault()
+#define TUI_DIE(x) __tui_error(x)

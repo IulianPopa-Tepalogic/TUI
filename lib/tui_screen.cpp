@@ -13,7 +13,7 @@
 using namespace std;
 
 
-bool tui_qui_initialize()
+bool tui_gui_initialize()
 {
 	MathCalcs::InitCaches();
 
