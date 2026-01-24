@@ -13,8 +13,10 @@ using namespace std;
 
 void MemoryImage::setPixel (int h, int v, const Pixel& pixel) const
 {
+#if TUI_DEBUG
 	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))
-		return;
+		TUI_DIE(__FILE__  ":" _TUI_STRINGNIFY(__LINE__) "MemoryImage::setPixel: Pixel position out of bounds!");
+#endif
 
 	m_Buffer[pixelPos(h, v)] = pixel;
 }
@@ -22,8 +24,10 @@ void MemoryImage::setPixel (int h, int v, const Pixel& pixel) const
 
 Pixel MemoryImage::getPixel (int h, int v) const
 {
+#ifdef TUI_DEBUG
 	if ((v < 0) | (v >= m_Height) | (h < 0) | (h >= m_Width))
-		return Pixel(0, 0, 0);
+		TUI_DIE(__FILE__ ":" _TUI_STRINGNIFY(__LINE__) "MemoryImage::getPixel: Pixel position out of bounds!" );
+#endif
 
 	return  m_Buffer[pixelPos(h, v)];
 }

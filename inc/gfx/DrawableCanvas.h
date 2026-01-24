@@ -45,6 +45,9 @@ public:
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const;
 	virtual void drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& provider, uint8_t dashFill, uint8_t dashSkip) const;
 
+	virtual void drawCircle(int hcenter, int vcenter, int radius, uint8_t width, const Pixel& color) const;
+	virtual void drawCircle(int hcenter, int vcenter, int radius, uint8_t width, const PixelColorProvider& provider) const;
+
 	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& provider, float startAngle = 0.0, float endAngle = 360.0) const;
 	virtual void drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& provider, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const;
 

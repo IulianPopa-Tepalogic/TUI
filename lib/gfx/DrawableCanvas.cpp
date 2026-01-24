@@ -5,6 +5,7 @@
  *      Author: IulianPopa
  */
 
+#include <gfx/Canvas.h>
 #include "gfx/DrawableCanvas.h"
 
 #include <algorithm>
@@ -14,166 +15,454 @@
 
 using namespace std;
 
+static inline uint8_t fpart(float x) { return (x - floorf(x)) * 255; }
+static inline uint8_t rfpart(float x) { return 255 - fpart(x); }
 
+#include <cmath>
+#include <algorithm>
+
+static inline int outcode(float x, float y, float xmin, float ymin, float xmax, float ymax)
+{
+    const int LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8;
+    int c = 0;
+
+    if (x < xmin) c |= LEFT;
+    else if (x > xmax) c |= RIGHT;
+
+    if (y < ymin) c |= BOTTOM;
+    else if (y > ymax) c |= TOP;
+
+    return c;
+}
+
+bool clip_line(int* const hfrom, int* const vfrom,
+               int* const hto,   int* const vto,
+               const int maxWidth, const int maxHeight)
+{
+    // Keep your invariant
+    if (*hfrom > *hto) { std::swap(*hfrom, *hto); std::swap(*vfrom, *vto); }
+
+    const float xmin = 0.0f;
+    const float ymin = 0.0f;
+    const float xmax = float(maxWidth  - 1);
+    const float ymax = float(maxHeight - 1);
+
+    float x0 = float(*hfrom), y0 = float(*vfrom);
+    float x1 = float(*hto),   y1 = float(*vto);
+
+    int c0 = outcode(x0, y0, xmin, ymin, xmax, ymax);
+    int c1 = outcode(x1, y1, xmin, ymin, xmax, ymax);
+
+    for (;;)
+    {
+        if ((c0 | c1) == 0) {
+            // both inside
+            break;
+        }
+        if (c0 & c1) {
+            // both outside on same side -> no intersection
+            return false;
+        }
+
+        // Choose an outside endpoint
+        int co = c0 ? c0 : c1;
+        float x, y;
+
+        const float dx = x1 - x0;
+        const float dy = y1 - y0;
+
+        // Intersect with the boundary indicated by co
+        if (co & 8) { // TOP: y = ymax
+            if (dy == 0.0f) return false;
+            x = x0 + dx * (ymax - y0) / dy;
+            y = ymax;
+        } else if (co & 4) { // BOTTOM: y = ymin
+            if (dy == 0.0f) return false;
+            x = x0 + dx * (ymin - y0) / dy;
+            y = ymin;
+        } else if (co & 2) { // RIGHT: x = xmax
+            if (dx == 0.0f) return false;
+            y = y0 + dy * (xmax - x0) / dx;
+            x = xmax;
+        } else { // LEFT: x = xmin
+            if (dx == 0.0f) return false;
+            y = y0 + dy * (xmin - x0) / dx;
+            x = xmin;
+        }
+
+        if (!std::isfinite(x) || !std::isfinite(y)) return false;
+
+        // Replace the endpoint we clipped
+        if (co == c0) {
+            x0 = x; y0 = y;
+            c0 = outcode(x0, y0, xmin, ymin, xmax, ymax);
+        } else {
+            x1 = x; y1 = y;
+            c1 = outcode(x1, y1, xmin, ymin, xmax, ymax);
+        }
+    }
+
+    // Convert back to int (your code truncates; rounding also works if you prefer)
+    *hfrom = (int)x0; *vfrom = (int)y0;
+    *hto   = (int)x1; *vto   = (int)y1;
+
+    // Restore invariant
+    if (*hfrom > *hto) { std::swap(*hfrom, *hto); std::swap(*vfrom, *vto); }
+
+    // final safety
+    return (*hfrom >= 0 && *hfrom < maxWidth  &&
+            *hto   >= 0 && *hto   < maxWidth  &&
+            *vfrom >= 0 && *vfrom < maxHeight &&
+            *vto   >= 0 && *vto   < maxHeight);
+}
 
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color) const
 {
+	if (clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height) == false) return;
+
 	if (hfrom == hto)
 	{
-		const auto len = vto - vfrom;
-		drawVLine(hfrom, vfrom, len, 1, color);
-		return ;
+		drawVLine(hfrom, vfrom, vto - vfrom, 1, color);
+		return;
 	}
 	else if (vfrom == vto)
 	{
-		const auto len = hto - hfrom;
-		drawHLine(hfrom, vfrom, len, 1, color);
-		return ;
+		drawHLine(hfrom, vfrom, hto - hfrom, 1, color);
+		return;
 	}
 
-	const float hsize = fabs((float)(hfrom - hto));
-	const float vsize = fabs((float)(vfrom - vto));
-	if (vsize < hsize)
+	const float m = ((float)(vfrom - vto)) / (hfrom - hto);
+	const float b =  vfrom - m * hfrom;
+	const float aafactor = .5f;
+
+	if (m > 0)
 	{
-		if (vto < vfrom)
+		int h = hfrom, v = vfrom;
+		while ((h <= hto) && (v <= vto) && (v >= vfrom))
 		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+			const float hn = (v + 1 - b) / m;
+			int deltaH = (int)(hn - h);
+			if (deltaH + h >= hto) deltaH = hto - h;
 
-		const int direction = hfrom < hto ? 1 : -1;
-		const float segment = hsize / vsize;
-		const float step = (float)(vto - vfrom)/(hto - hfrom);
-
-		for (int h = hfrom, hcount = 0; h != hto; h += direction, ++hcount)
-		{
-			int v = vfrom + (hcount / segment);
-			const float linev = (h - hfrom) * step + vfrom;
-
-			float err = linev - v;
-			if (err < .0f)
+			if (deltaH == 0)
 			{
-				err = -err;
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h, v - 1, color, err);
+				const float vn = m * (h + 1) + b;
+				int deltaV = (int)(vn - v);
+				if (deltaV + v >= vto) deltaV = vto - v;
+				if (deltaV <= 0) {
+					setPixel(h, v, color);
+					break;
+				}
+
+				int bound = v + deltaV / 2;
+				const float d = 1.f / (bound - v + 1);
+
+				for (int iv = v; iv <= bound; ++iv)
+					setPixel(h, iv, color);
+
+				h += 1;
+				if (h <= hto) {
+					float lum = .0f, step = d * aafactor;
+					for (int iv = v; iv <= bound; ++iv, lum += step)
+						setPixel(h, iv, color, lum);
+				}
+
+				v += deltaV;
+
+				if (h <= hto) {
+					for (int iv = bound + 1; iv < v; ++iv)
+						setPixel(h, iv, color);
+				}
+
+				if (hfrom < h) {
+					const int ht = h - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int iv = bound; iv < v; ++iv, lum -= step)
+						setPixel(ht, iv, color, lum);
+				}
 			}
 			else
 			{
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h, v + 1, color, err);
+				int bound = h + deltaH / 2;
+				const float d = 1.f / (bound - h + 1);
+
+				for (int ih = h; ih <= bound; ++ih)
+					setPixel(ih, v, color);
+
+				v += 1;
+				if (v <= vto) {
+					float lum = .0f, step = d * aafactor;
+					for (int ih = h; ih <= bound; ++ih, lum += step) {
+						setPixel(ih, v, color, lum);
+					}
+				}
+
+				h += deltaH;
+				if (v <= vto) {
+					for (int ih = bound + 1; ih < h ; ++ih)
+						setPixel(ih, v, color);
+				}
+
+				if (vfrom < v) {
+					const int vt = v - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int ih = bound; ih < h; ++ih, lum -= step)
+						setPixel(ih, vt, color, lum);
+				}
+
 			}
 		}
 	}
 	else
 	{
-		if (hto < hfrom)
+		int h = hfrom, v = vfrom;
+		while ((h <= hto) && (v >= vto) && (v <= vfrom))
 		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+			const float hn = (v - 1 - b) / m;
+			int deltaH = (int)(hn - h);
+			if (deltaH + h >= hto) deltaH = hto - h;
 
-		const int direction = vfrom < vto ? 1 : -1;
-		const float segment = vsize / hsize;
-		const float step = (float)(hto - hfrom)/(vto - vfrom);
-
-		for (int v = vfrom, vcount = 0; v != vto; v += direction, ++vcount)
-		{
-			int h = hfrom + (vcount / segment);
-			const float lineh = (v - vfrom) * step + hfrom;
-
-			float err = lineh - h;
-			if (err < .0f)
+			if (deltaH == 0)
 			{
-				err = -err;
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h - 1, v, color, err);
+				const float vn = m * (h + 1) + b;
+				int deltaV = (int)(v - vn);
+				if (v - deltaV <= vto) deltaV = v - vto;
+				if (deltaV <= 0) {
+					setPixel(h, v, color);
+					break;
+				}
+
+				int bound = v - deltaV / 2;
+				const float d = 1.f / (v - bound + 1);
+
+				for (int iv = v; iv >= bound; --iv)
+					setPixel(h, iv, color);
+
+				h += 1;
+				if (h <= hto) {
+					float lum = .0f, step = d * aafactor;
+					for (int iv = v; iv >= bound; --iv, lum += step) {
+						setPixel(h, iv, color, lum);
+					}
+				}
+
+				v -= deltaV;
+
+				for (int iv = bound - 1; iv > v; --iv)
+					setPixel(h, iv, color);
+
+				if (hfrom < h) {
+					const int ht = h - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int iv = bound; iv > v; --iv, lum -= step) {
+						setPixel(ht, iv, color, lum);
+					}
+				}
 			}
 			else
 			{
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h + 1, v, color, err);
+				int bound = h + deltaH / 2;
+				const float d = 1.f / (bound - h + 1);
+
+				for (int ih = h; ih <= bound; ++ih)
+					setPixel(ih, v, color);
+
+				if (v < vfrom) {
+					const int vt = v + 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int ih = h; ih <= bound; ++ih, lum -= step) {
+						setPixel(ih, vt, color, lum);
+					}
+				}
+
+				h += deltaH;
+				for (int ih = bound + 1; ih < h; ++ih)
+					setPixel(ih, v, color);
+
+				if (vto < v) {
+					const int vt = v - 1;
+					float lum = .0f, step = d * aafactor;
+					for (int ih = bound; ih < h; ++ih, lum += step) {
+						setPixel(ih, vt, color, lum);
+					}
+				}
+				v -= 1;
 			}
 		}
 	}
 }
 
-
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel) const
 {
+	if (clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height) == false) return;
+
 	if (hfrom == hto)
 	{
-		const auto len = vto - vfrom;
-		drawVLine(hfrom, vfrom, len, 1, pixel);
-		return ;
+		drawVLine(hfrom, vfrom, vto - vfrom, 1, pixel);
+		return;
 	}
 	else if (vfrom == vto)
 	{
-		const auto len = hto - hfrom;
-		drawHLine(hfrom, vfrom, len, 1, pixel);
-		return ;
+		drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel);
+		return;
 	}
 
-	const float hsize = fabs((float)(hfrom - hto));
-	const float vsize = fabs((float)(vfrom - vto));
-	if (vsize < hsize)
+	const float m = ((float)(vfrom - vto)) / (hfrom - hto);
+	const float b =  vfrom - m * hfrom;
+	const float aafactor = .5f;
+
+	if (m > 0)
 	{
-		if (vto < vfrom)
+		int h = hfrom, v = vfrom;
+		while ((h <= hto) && (v <= vto) && (v >= vfrom))
 		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+			const float hn = (v + 1 - b) / m;
+			int deltaH = (int)(hn - h);
+			if (deltaH + h >= hto) deltaH = hto - h;
 
-		const int direction = hfrom < hto ? 1 : -1;
-		const float segment = hsize / vsize;
-		const float step = (float)(vto - vfrom)/(hto - hfrom);
-
-		for (int h = hfrom, hcount = 0; h != hto; h += direction, ++hcount)
-		{
-			int v = vfrom + (hcount / segment);
-			const float linev = (h - hfrom) * step + vfrom;
-
-			float err = linev - v;
-			if (err < .0f)
+			if (deltaH == 0)
 			{
-				err = -err;
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h, v - 1, pixel, err);
+				const float vn = m * (h + 1) + b;
+				int deltaV = (int)(vn - v);
+				if (deltaV + v >= vto) deltaV = vto - v;
+				if (deltaV <= 0) {
+					setPixel(h, v, pixel);
+					break;
+				}
+
+				int bound = v + deltaV / 2;
+				const float d = 1.f / (bound - v + 1);
+
+				for (int iv = v; iv <= bound; ++iv)
+					setPixel(h, iv, pixel);
+
+				h += 1;
+				if (h <= hto) {
+					float lum = .0f, step = d * aafactor;
+					for (int iv = v; iv <= bound; ++iv, lum += step)
+						setPixel(h, iv, pixel, lum);
+				}
+
+				v += deltaV;
+
+				if (h <= hto) {
+					for (int iv = bound + 1; iv < v; ++iv)
+						setPixel(h, iv, pixel);
+				}
+
+				if (hfrom < h) {
+					const int ht = h - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int iv = bound; iv < v; ++iv, lum -= step)
+						setPixel(ht, iv, pixel, lum);
+				}
 			}
 			else
 			{
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h, v + 1, pixel, err);
+				int bound = h + deltaH / 2;
+				const float d = 1.f / (bound - h + 1);
+
+				for (int ih = h; ih <= bound; ++ih)
+					setPixel(ih, v, pixel);
+
+				v += 1;
+				if (v <= vto) {
+					float lum = .0f, step = d * aafactor;
+					for (int ih = h; ih <= bound; ++ih, lum += step) {
+						setPixel(ih, v, pixel, lum);
+					}
+				}
+
+				h += deltaH;
+				if (v <= vto) {
+					for (int ih = bound + 1; ih < h ; ++ih)
+						setPixel(ih, v, pixel);
+				}
+
+				if (vfrom < v) {
+					const int vt = v - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int ih = bound; ih < h; ++ih, lum -= step)
+						setPixel(ih, vt, pixel, lum);
+				}
+
 			}
 		}
 	}
 	else
 	{
-		if (hto < hfrom)
+		int h = hfrom, v = vfrom;
+		while ((h <= hto) && (v >= vto) && (v <= vfrom))
 		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+			const float hn = (v - 1 - b) / m;
+			int deltaH = (int)(hn - h);
+			if (deltaH + h >= hto) deltaH = hto - h;
 
-		const int direction = vfrom < vto ? 1 : -1;
-		const float segment = vsize / hsize;
-		const float step = (float)(hto - hfrom)/(vto - vfrom);
-
-		for (int v = vfrom, vcount = 0; v != vto; v += direction, ++vcount)
-		{
-			int h = hfrom + (vcount / segment);
-			const float lineh = (v - vfrom) * step + hfrom;
-
-			float err = lineh - h;
-			if (err < .0f)
+			if (deltaH == 0)
 			{
-				err = -err;
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h - 1, v, pixel, err);
+				const float vn = m * (h + 1) + b;
+				int deltaV = (int)(v - vn);
+				if (v - deltaV <= vto) deltaV = v - vto;
+				if (deltaV <= 0) {
+					setPixel(h, v, pixel);
+					break;
+				}
+
+				int bound = v - deltaV / 2;
+				const float d = 1.f / (v - bound + 1);
+
+				for (int iv = v; iv >= bound; --iv)
+					setPixel(h, iv, pixel);
+
+				h += 1;
+				if (h <= hto) {
+					float lum = .0f, step = d * aafactor;
+					for (int iv = v; iv >= bound; --iv, lum += step) {
+						setPixel(h, iv, pixel, lum);
+					}
+				}
+
+				v -= deltaV;
+
+				for (int iv = bound - 1; iv > v; --iv)
+					setPixel(h, iv, pixel);
+
+				if (hfrom < h) {
+					const int ht = h - 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int iv = bound; iv > v; --iv, lum -= step) {
+						setPixel(ht, iv, pixel, lum);
+					}
+				}
 			}
 			else
 			{
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h + 1, v, pixel, err);
+				int bound = h + deltaH / 2;
+				const float d = 1.f / (bound - h + 1);
+
+				for (int ih = h; ih <= bound; ++ih)
+					setPixel(ih, v, pixel);
+
+				if (v < vfrom) {
+					const int vt = v + 1;
+					float lum = 1.0f * aafactor, step = d * aafactor;
+					for (int ih = h; ih <= bound; ++ih, lum -= step) {
+						setPixel(ih, vt, pixel, lum);
+					}
+				}
+
+				h += deltaH;
+				for (int ih = bound + 1; ih < h; ++ih)
+					setPixel(ih, v, pixel);
+
+				if (vto < v) {
+					const int vt = v - 1;
+					float lum = .0f, step = d * aafactor;
+					for (int ih = bound; ih < h; ++ih, lum += step) {
+						setPixel(ih, vt, pixel, lum);
+					}
+				}
+				v -= 1;
 			}
 		}
 	}
@@ -181,225 +470,386 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
 {
-	if (dashFill == 0)
-		return ;
+    if (dashFill == 0) return;
 
-	if (hfrom == hto)
-	{
-		const auto len = vto - vfrom;
-		drawVLine(hfrom, vfrom, len, 1, color, dashFill, dashSkip);
-		return ;
-	}
-	else if (vfrom == vto)
-	{
-		drawHLine(hfrom, vfrom, hto - hfrom, 1, color, dashFill, dashSkip);
-		return ;
-	}
+    // dashSkip==0 => solid line, reuse your existing AA implementation
+    if (dashSkip == 0) {
+        drawLine(hfrom, vfrom, hto, vto, color);
+        return;
+    }
 
-	const float hsize = fabs((float)(hfrom - hto));
-	const float vsize = fabs((float)(vfrom - vto));
-	if (vsize < hsize)
-	{
-		if (vto < vfrom)
-		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+    if (!clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height)) return;
 
-		const int direction = hfrom < hto ? 1 : -1;
-		const float segment = hsize / vsize;
-		const float step = (float)(vto - vfrom)/(hto - hfrom);
+    // Fast paths (keep your helpers)
+    if (hfrom == hto) { drawVLine(hfrom, vfrom, vto - vfrom, 1, color); return; }
+    if (vfrom == vto) { drawHLine(hfrom, vfrom, hto - hfrom, 1, color); return; }
 
-		auto fill = dashFill;
-		for (int h = hfrom, hcount = 0; (direction > 0 ? h < hto : hto < h); h += direction, ++hcount)
-		{
-			if (dashSkip > 0)
-			{
-				if (fill == 0)
-				{
-					hcount += (dashSkip - 1);
-					h += direction * (dashSkip - 1);
-					fill = dashFill;
-					continue;
-				}
-				else
-					fill--;
-			}
+    const float m = ((float)(vfrom - vto)) / (hfrom - hto);
+    const float b =  vfrom - m * hfrom;
+    const float aafactor = .5f;
 
-			int v = vfrom + (hcount / segment);
-			const float linev = (h - hfrom) * step + vfrom;
+    const int period = int(dashFill) + int(dashSkip);
+    const int hstart = hfrom;
 
-			float err = linev - v;
-			if (err < .0f)
-			{
-				err = -err;
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h, v - 1, color, err);
-			}
-			else
-			{
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h, v + 1, color, err);
-			}
-		}
-	}
-	else
-	{
-		if (hto < hfrom)
-		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+    auto dashOn = [&](int h) -> bool {
+        int ph = (h - hstart) % period;
+        if (ph < 0) ph += period;
+        return ph < int(dashFill);
+    };
 
-		const int direction = vfrom < vto ? 1 : -1;
-		const float segment = vsize / hsize;
-		const float step = (float)(hto - hfrom)/(vto - vfrom);
+    auto setDashed = [&](int h, int v) {
+        if (dashOn(h)) setPixel(h, v, color);
+    };
 
-		auto fill = dashFill;
-		for (int v = vfrom, vcount = 0; (direction > 0 ? v < vto : vto < v); v += direction, ++vcount)
-		{
-			if (dashSkip > 0)
-			{
-				if (fill == 0)
-				{
-					vcount += (dashSkip - 1);
-					v += direction * (dashSkip - 1);
-					fill = dashFill;
-					continue;
-				}
-				else
-					fill--;
-			}
+    auto setDashedAA = [&](int h, int v, float lum) {
+        if (dashOn(h)) setPixel(h, v, color, lum);
+    };
 
-			int h = hfrom + (vcount / segment);
-			const float lineh = (v - vfrom) * step + hfrom;
+    if (m > 0)
+    {
+        int h = hfrom, v = vfrom;
+        while ((h <= hto) && (v <= vto) && (v >= vfrom))
+        {
+            const float hn = (v + 1 - b) / m;
+            int deltaH = (int)(hn - h);
+            if (deltaH + h >= hto) deltaH = hto - h;
 
-			float err = lineh - h;
-			if (err < .0f)
-			{
-				err = -err;
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h - 1, v, color, err);
-			}
-			else
-			{
-				setPixel(h, v, color, 1.0f - err);
-				setPixel(h + 1, v, color, err);
-			}
-		}
-	}
+            if (deltaH == 0)
+            {
+                const float vn = m * (h + 1) + b;
+                int deltaV = (int)(vn - v);
+                if (deltaV + v >= vto) deltaV = vto - v;
+
+                if (deltaV <= 0) {
+                    setDashed(h, v);
+                    break;
+                }
+
+                int bound = v + deltaV / 2;
+                const float d = 1.f / (bound - v + 1);
+
+                for (int iv = v; iv <= bound; ++iv)
+                    setDashed(h, iv);
+
+                h += 1;
+                if (h <= hto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int iv = v; iv <= bound; ++iv, lum += step)
+                        setDashedAA(h, iv, lum);
+                }
+
+                v += deltaV;
+
+                if (h <= hto) {
+                    for (int iv = bound + 1; iv < v; ++iv)
+                        setDashed(h, iv);
+                }
+
+                if (hfrom < h) {
+                    const int ht = h - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int iv = bound; iv < v; ++iv, lum -= step)
+                        setDashedAA(ht, iv, lum);
+                }
+            }
+            else
+            {
+                int bound = h + deltaH / 2;
+                const float d = 1.f / (bound - h + 1);
+
+                for (int ih = h; ih <= bound; ++ih)
+                    setDashed(ih, v);
+
+                v += 1;
+                if (v <= vto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int ih = h; ih <= bound; ++ih, lum += step)
+                        setDashedAA(ih, v, lum);
+                }
+
+                h += deltaH;
+                if (v <= vto) {
+                    for (int ih = bound + 1; ih < h ; ++ih)
+                        setDashed(ih, v);
+                }
+
+                if (vfrom < v) {
+                    const int vt = v - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int ih = bound; ih < h; ++ih, lum -= step)
+                        setDashedAA(ih, vt, lum);
+                }
+            }
+        }
+    }
+    else
+    {
+        int h = hfrom, v = vfrom;
+        while ((h <= hto) && (v >= vto) && (v <= vfrom))
+        {
+            const float hn = (v - 1 - b) / m;
+            int deltaH = (int)(hn - h);
+            if (deltaH + h >= hto) deltaH = hto - h;
+
+            if (deltaH == 0)
+            {
+                const float vn = m * (h + 1) + b;
+                int deltaV = (int)(v - vn);
+
+                // Clamp to vto (not 0)
+                if (v - deltaV <= vto) deltaV = v - vto;
+
+                if (deltaV <= 0) {
+                    setDashed(h, v);
+                    break;
+                }
+
+                int bound = v - deltaV / 2;
+                const float d = 1.f / (v - bound + 1);
+
+                for (int iv = v; iv >= bound; --iv)
+                    setDashed(h, iv);
+
+                h += 1;
+                if (h <= hto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int iv = v; iv >= bound; --iv, lum += step)
+                        setDashedAA(h, iv, lum);
+                }
+
+                v -= deltaV;
+
+                for (int iv = bound - 1; iv > v; --iv)
+                    setDashed(h, iv);
+
+                if (hfrom < h) {
+                    const int ht = h - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int iv = bound; iv > v; --iv, lum -= step)
+                        setDashedAA(ht, iv, lum);
+                }
+            }
+            else
+            {
+                int bound = h + deltaH / 2;
+                const float d = 1.f / (bound - h + 1);
+
+                for (int ih = h; ih <= bound; ++ih)
+                    setDashed(ih, v);
+
+                if (v < vfrom) {
+                    const int vt = v + 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int ih = h; ih <= bound; ++ih, lum -= step)
+                        setDashedAA(ih, vt, lum);
+                }
+
+                h += deltaH;
+                for (int ih = bound + 1; ih < h; ++ih)
+                    setDashed(ih, v);
+
+                if (vto < v) {
+                    const int vt = v - 1;
+                    float lum = .0f, step = d * aafactor;
+                    for (int ih = bound; ih < h; ++ih, lum += step)
+                        setDashedAA(ih, vt, lum);
+                }
+                v -= 1;
+            }
+        }
+    }
 }
-
 
 void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
-	if (dashFill == 0)
-		return ;
+    if (dashFill == 0) return;
 
-	if (hfrom == hto)
-	{
-		const auto len = vto - vfrom;
-		drawVLine(hfrom, vfrom, len, 1, pixel, dashFill, dashSkip);
-		return ;
-	}
-	else if (vfrom == vto)
-	{
-		drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel, dashFill, dashSkip);
-		return ;
-	}
+    // dashSkip==0 => solid line, reuse your existing AA implementation
+    if (dashSkip == 0) {
+        drawLine(hfrom, vfrom, hto, vto, pixel);
+        return;
+    }
 
-	const float hsize = fabs((float)(hfrom - hto));
-	const float vsize = fabs((float)(vfrom - vto));
-	if (vsize < hsize)
-	{
-		if (vto < vfrom)
-		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+    if (!clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height)) return;
 
-		const int direction = hfrom < hto ? 1 : -1;
-		const float segment = hsize / vsize;
-		const float step = (float)(vto - vfrom)/(hto - hfrom);
+    // Keep your fast paths
+    if (hfrom == hto) { drawVLine(hfrom, vfrom, vto - vfrom, 1, pixel); return; }
+    if (vfrom == vto) { drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel); return; }
 
-		auto fill = dashFill;
-		for (int h = hfrom, hcount = 0; (direction > 0 ? h < hto : hto < h); h += direction, ++hcount)
-		{
-			if (dashSkip > 0)
-			{
-				if (fill == 0)
-				{
-					hcount += (dashSkip - 1);
-					h += direction * (dashSkip - 1);
-					fill = dashFill;
-					continue;
-				}
-				else
-					fill--;
-			}
+    const float m = ((float)(vfrom - vto)) / (hfrom - hto);
+    const float b =  vfrom - m * hfrom;
+    const float aafactor = .5f;
 
-			int v = vfrom + (hcount / segment);
-			const float linev = (h - hfrom) * step + vfrom;
+    const int period = int(dashFill) + int(dashSkip);
+    const int hstart = hfrom;
 
-			float err = linev - v;
-			if (err < .0f)
-			{
-				err = -err;
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h, v - 1, pixel, err);
-			}
-			else
-			{
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h, v + 1, pixel, err);
-			}
-		}
-	}
-	else
-	{
-		if (hto < hfrom)
-		{
-			swap(vto, vfrom);
-			swap(hto, hfrom);
-		}
+    auto dashOn = [&](int h) -> bool {
+        int ph = (h - hstart) % period;
+        if (ph < 0) ph += period;
+        return ph < int(dashFill);
+    };
 
-		const int direction = vfrom < vto ? 1 : -1;
-		const float segment = vsize / hsize;
-		const float step = (float)(hto - hfrom)/(vto - vfrom);
+    auto setDashed = [&](int h, int v) {
+        if (dashOn(h)) setPixel(h, v, pixel);
+    };
 
-		auto fill = dashFill;
-		for (int v = vfrom, vcount = 0; (direction > 0 ? v < vto : vto < v); v += direction, ++vcount)
-		{
-			if (dashSkip > 0)
-			{
-				if (fill == 0)
-				{
-					vcount += (dashSkip - 1);
-					v += direction * (dashSkip - 1);
-					fill = dashFill;
-					continue;
-				}
-				else
-					fill--;
-			}
+    auto setDashedAA = [&](int h, int v, float lum) {
+        if (dashOn(h)) setPixel(h, v, pixel, lum);
+    };
 
-			int h = hfrom + (vcount / segment);
-			const float lineh = (v - vfrom) * step + hfrom;
+    if (m > 0)
+    {
+        int h = hfrom, v = vfrom;
+        while ((h <= hto) && (v <= vto) && (v >= vfrom))
+        {
+            const float hn = (v + 1 - b) / m;
+            int deltaH = (int)(hn - h);
+            if (deltaH + h >= hto) deltaH = hto - h;
 
-			float err = lineh - h;
-			if (err < .0f)
-			{
-				err = -err;
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h - 1, v, pixel, err);
-			}
-			else
-			{
-				setPixel(h, v, pixel, 1.0f - err);
-				setPixel(h + 1, v, pixel, err);
-			}
-		}
-	}
+            if (deltaH == 0)
+            {
+                const float vn = m * (h + 1) + b;
+                int deltaV = (int)(vn - v);
+                if (deltaV + v >= vto) deltaV = vto - v;
+
+                if (deltaV <= 0) {
+                    setDashed(h, v);
+                    break;
+                }
+
+                int bound = v + deltaV / 2;
+                const float d = 1.f / (bound - v + 1);
+
+                for (int iv = v; iv <= bound; ++iv)
+                    setDashed(h, iv);
+
+                h += 1;
+                if (h <= hto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int iv = v; iv <= bound; ++iv, lum += step)
+                        setDashedAA(h, iv, lum);
+                }
+
+                v += deltaV;
+
+                if (h <= hto) {
+                    for (int iv = bound + 1; iv < v; ++iv)
+                        setDashed(h, iv);
+                }
+
+                if (hfrom < h) {
+                    const int ht = h - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int iv = bound; iv < v; ++iv, lum -= step)
+                        setDashedAA(ht, iv, lum);
+                }
+            }
+            else
+            {
+                int bound = h + deltaH / 2;
+                const float d = 1.f / (bound - h + 1);
+
+                for (int ih = h; ih <= bound; ++ih)
+                    setDashed(ih, v);
+
+                v += 1;
+                if (v <= vto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int ih = h; ih <= bound; ++ih, lum += step)
+                        setDashedAA(ih, v, lum);
+                }
+
+                h += deltaH;
+                if (v <= vto) {
+                    for (int ih = bound + 1; ih < h ; ++ih)
+                        setDashed(ih, v);
+                }
+
+                if (vfrom < v) {
+                    const int vt = v - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int ih = bound; ih < h; ++ih, lum -= step)
+                        setDashedAA(ih, vt, lum);
+                }
+            }
+        }
+    }
+    else
+    {
+        int h = hfrom, v = vfrom;
+        while ((h <= hto) && (v >= vto) && (v <= vfrom))
+        {
+            const float hn = (v - 1 - b) / m;
+            int deltaH = (int)(hn - h);
+            if (deltaH + h >= hto) deltaH = hto - h;
+
+            if (deltaH == 0)
+            {
+                const float vn = m * (h + 1) + b;
+                int deltaV = (int)(v - vn);
+
+                // IMPORTANT: clamp to vto (not 0)
+                if (v - deltaV <= vto) deltaV = v - vto;
+
+                if (deltaV <= 0) {
+                    setDashed(h, v);
+                    break;
+                }
+
+                int bound = v - deltaV / 2;
+                const float d = 1.f / (v - bound + 1);
+
+                for (int iv = v; iv >= bound; --iv)
+                    setDashed(h, iv);
+
+                h += 1;
+                if (h <= hto) {
+                    float lum = .0f, step = d * aafactor;
+                    for (int iv = v; iv >= bound; --iv, lum += step)
+                        setDashedAA(h, iv, lum);
+                }
+
+                v -= deltaV;
+
+                for (int iv = bound - 1; iv > v; --iv)
+                    setDashed(h, iv);
+
+                if (hfrom < h) {
+                    const int ht = h - 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int iv = bound; iv > v; --iv, lum -= step)
+                        setDashedAA(ht, iv, lum);
+                }
+            }
+            else
+            {
+                int bound = h + deltaH / 2;
+                const float d = 1.f / (bound - h + 1);
+
+                for (int ih = h; ih <= bound; ++ih)
+                    setDashed(ih, v);
+
+                if (v < vfrom) {
+                    const int vt = v + 1;
+                    float lum = 1.0f * aafactor, step = d * aafactor;
+                    for (int ih = h; ih <= bound; ++ih, lum -= step)
+                        setDashedAA(ih, vt, lum);
+                }
+
+                h += deltaH;
+                for (int ih = bound + 1; ih < h; ++ih)
+                    setDashed(ih, v);
+
+                if (vto < v) {
+                    const int vt = v - 1;
+                    float lum = .0f, step = d * aafactor;
+                    for (int ih = bound; ih < h; ++ih, lum += step)
+                        setDashedAA(ih, vt, lum);
+                }
+                v -= 1;
+            }
+        }
+    }
 }
 
 void DrawableCanvas::drawSlopedLine(int hfrom, int vfrom, int length, float clockWiseDeg, const Pixel& color) const
@@ -483,18 +933,18 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	{
 		const int off = -vfrom;
 		vfrom = 0;
-
 		width -= off;
 	}
 
-	length = ((hfrom + length) < m_Width) ? length : (m_Width - hfrom);
-	width = ((vfrom + width) < m_Height) ? width : (m_Height - vfrom);
+	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
+	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
 	if ((length <= 0) || (width <= 0))
 		return;
 
 	int lineIdx = width;
-	while (--lineIdx >= 0) {
+	while (--lineIdx >= 0)
+	{
 		int i = length;
 		while (--i >= 0)
 			setPixel(hfrom + i, vfrom + lineIdx, color);
@@ -504,18 +954,6 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 
 void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel) const
 {
-	if (length < 0)
-	{
-		hfrom += length;
-		length = -length;
-	}
-
-	if (width < 0)
-	{
-		vfrom += width;
-		width = -width;
-	}
-
 	if (hfrom < 0)
 	{
 		const auto off = -hfrom;
@@ -527,7 +965,6 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	{
 		const int off = -vfrom;
 		vfrom = 0;
-
 		width -= off;
 	}
 
@@ -537,15 +974,19 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	if ((length <= 0) || (width <= 0))
 		return;
 
-	for (int lineIdx = 0; lineIdx < width; lineIdx++)
-		for (int i = 0;  i < length; ++i)
-			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
+	int lineIdx = width;
+	while (--lineIdx >= 0)
+	{
+		int i = length;
+		while (--i >= 0)
+			setPixel(hfrom + i, vfrom + lineIdx, pixel);
+	}
 }
 
 
 void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
 {
-	if (dashFill == 0)
+	if ((dashFill <= 0) || (dashSkip < 0))
 		return ;
 
 	else if (dashSkip == 0)
@@ -577,15 +1018,18 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	{
 		const int off = -vfrom;
 		vfrom = 0;
-
 		width -= off;
 	}
 
 	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
 	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
-	auto fill = dashFill;
+	if (length <= 0 || width <= 0)
+		return;
+
 	for (int lineIdx = 0; lineIdx < width; lineIdx++)
+	{
+		auto fill = dashFill;
 		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
@@ -599,12 +1043,13 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 
 			setPixel(hfrom + i, vfrom + lineIdx, color);
 		}
+	}
 }
 
 
 void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
-	if (dashFill == 0)
+	if ((dashFill <= 0) || (dashSkip < 0))
 		return ;
 
 	else if (dashSkip == 0)
@@ -636,15 +1081,18 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 	{
 		const int off = -vfrom;
 		vfrom = 0;
-
 		width -= off;
 	}
 
 	length = ((hfrom + length) <= m_Width) ? length : (m_Width - hfrom);
 	width = ((vfrom + width) <= m_Height) ? width : (m_Height - vfrom);
 
-	auto fill = dashFill;
+	if (length <= 0 || width <= 0)
+		return;
+
 	for (int lineIdx = 0; lineIdx < width; lineIdx++)
+	{
+		auto fill = dashFill;
 		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
@@ -656,13 +1104,26 @@ void DrawableCanvas::drawHLine (int hfrom, int vfrom, int length, int width, con
 			else
 				fill--;
 
-			setPixel(hfrom + i, vfrom + lineIdx, pixel.get(hfrom + i, vfrom + lineIdx));
+			setPixel(hfrom + i, vfrom + lineIdx, pixel);
 		}
+	}
 }
 
 
 void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color) const
 {
+    if (length < 0)
+    {
+    	vfrom += length;
+    	length = -length;
+    }
+
+    if (width < 0)
+    {
+    	hfrom += width;
+    	width  = -width;
+    }
+
 	if (vfrom < 0)
 	{
 		const int off = -vfrom;
@@ -677,8 +1138,8 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 		width -= off;
 	}
 
-	length = ((vfrom + length) < m_Height) ? length : (m_Height - vfrom);
-	width = ((hfrom + width) < m_Width) ? width : (m_Width - hfrom);
+	length = ((vfrom + length) <= m_Height) ? length : (m_Height - vfrom);
+	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
 
 	if ((length <= 0) || (width <= 0))
 		return;
@@ -694,17 +1155,63 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 
 void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel) const
 {
-	if (width < 0)
+    if (length < 0)
+    {
+    	vfrom += length;
+    	length = -length;
+    }
+
+    if (width < 0)
+    {
+    	hfrom += width;
+    	width  = -width;
+    }
+
+	if (vfrom < 0)
 	{
-		hfrom += width;
-		width = -width;
+		const int off = -vfrom;
+		vfrom = 0;
+		length -= off;
 	}
 
-	if (length < 0)
+	if (hfrom < 0)
 	{
-		vfrom += length;
-		length = -length;
+		const int off = -hfrom;
+		hfrom = 0;
+		width -= off;
 	}
+
+	length = ((vfrom + length) <= m_Height) ? length : (m_Height - vfrom);
+	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
+
+	if ((length <= 0) || (width <= 0))
+		return;
+
+	int lineIdx = width;
+	while (--lineIdx >= 0) {
+		int i = length;
+		while (--i >= 0)
+			setPixel(hfrom + lineIdx, vfrom + i, pixel);
+	}
+}
+
+
+void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
+{
+	if ((dashFill <= 0) || (dashSkip < 0))
+		return ;
+
+    if (length < 0)
+    {
+    	vfrom += length;
+    	length = -length;
+    }
+
+    if (width < 0)
+    {
+    	hfrom += width;
+    	width  = -width;
+    }
 
 	if (vfrom < 0)
 	{
@@ -727,57 +1234,8 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 		return;
 
 	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
-		for (int i = 0;  i < length; ++i)
-			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
-}
-
-
-void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const Pixel& color, uint8_t dashFill, uint8_t dashSkip) const
-{
-	if (dashFill == 0)
-		return ;
-
-	else if (dashSkip == 0)
 	{
-		drawVLine(hfrom, vfrom, length, width, color);
-		return ;
-	}
-
-	if (width < 0)
-	{
-		hfrom -= width;
-		width = -width;
-	}
-
-	if (length < 0)
-	{
-		vfrom -= length;
-		length = -length;
-	}
-
-	if (vfrom < 0)
-	{
-		const int off = -vfrom;
-		vfrom = 0;
-		length -= off;
-	}
-
-	if (hfrom < 0)
-	{
-		const int off = -hfrom;
-		hfrom = 0;
-		width -= off;
-	}
-
-	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
-	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
-
-	if ((length <= 0) || (width <= 0))
-		return;
-
-	auto fill = dashFill;
-	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
-	{
+		auto fill = dashFill;
 		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
@@ -797,26 +1255,20 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 
 void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, const PixelColorProvider& pixel, uint8_t dashFill, uint8_t dashSkip) const
 {
-	if (dashFill == 0)
+	if ((dashFill <= 0) || (dashSkip < 0))
 		return ;
 
-	else if (dashSkip == 0)
-	{
-		drawVLine(hfrom, vfrom, length, width, pixel);
-		return ;
-	}
+    if (length < 0)
+    {
+    	vfrom += length;
+    	length = -length;
+    }
 
-	if (width < 0)
-	{
-		hfrom -= width;
-		width = -width;
-	}
-
-	if (length < 0)
-	{
-		vfrom -= length;
-		length = -length;
-	}
+    if (width < 0)
+    {
+    	hfrom += width;
+    	width  = -width;
+    }
 
 	if (vfrom < 0)
 	{
@@ -832,15 +1284,15 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 		width -= off;
 	}
 
-	length = ((vfrom + length) <= m_Height) ? length : (m_Height - hfrom);
+	length = ((vfrom + length) <= m_Height) ? length : (m_Height - vfrom);
 	width = ((hfrom + width) <= m_Width) ? width : (m_Width - hfrom);
 
 	if ((length <= 0) || (width <= 0))
 		return;
 
-	auto fill = dashFill;
 	for (int lineIdx = 0; lineIdx < width; ++lineIdx)
 	{
+		auto fill = dashFill;
 		for (int i = 0;  i < length; ++i)
 		{
 			if (fill == 0)
@@ -852,7 +1304,7 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 			else
 				fill--;
 
-			setPixel(hfrom + lineIdx, vfrom + i, pixel.get(hfrom + lineIdx, vfrom + i));
+			setPixel(hfrom + lineIdx, vfrom + i, pixel);
 		}
 	}
 }
@@ -900,6 +1352,125 @@ static bool check_point_fourth_cadrant(float startAngle, float endAngle, float t
 		return (dv / dh) <= tanEnd;
 
 	return (dh == .0f) && (endAngle > 270.0f) && (startAngle <= 270.0f);
+}
+
+
+void DrawableCanvas::drawCircle(int hcenter, int vcenter, int radius, uint8_t width, const Pixel& color) const
+{
+	if (radius < 0)
+		return;
+
+	else if (radius == 0)
+	{
+		if ((0 <= hcenter) && (hcenter < m_Width )
+			&& (0 <= vcenter) && (vcenter < m_Height))
+		{
+			setPixel(hcenter, vcenter, color);
+		}
+		return;
+	}
+
+	if (width > radius) width = radius;
+
+	const uint_t radius_l = (radius - width + 1);
+	const uint_t uperbound = (radius + 1) * (radius + 1);
+	const uint_t lowerbound = (radius_l - 1)* (radius_l - 1);
+	const uint_t sqradius = radius * radius;
+	const uint_t sqradius_l = radius_l * radius_l;
+	const float inv2radius = 1.f / (2 * radius); //an extra for 2 is the scaling factor
+	const float inv2radius_l = 1.f / (2 * radius_l); //an extra for 2 is the scaling factor
+
+	int hItFrom = hcenter - radius;
+	if (hItFrom < 0) { hItFrom = 0; if (abs(hItFrom - hcenter) >= radius) return;}
+	int hItTo = hcenter + radius;
+	if (hItTo >= m_Width) {  hItTo = m_Width - 1; if (abs(hItTo - hcenter) >= radius) return; }
+
+	int vItFrom = vcenter - radius;
+	if (vItFrom < 0) { vItFrom = 0; if (abs(vItFrom - vcenter) >= radius) return; }
+
+	int vItTo = vcenter + radius;
+	if (vItTo >= m_Height) { vItTo = m_Height - 1; if (abs(vItTo - vcenter) >= radius) return; }
+
+	for (int h = hItFrom; h <= hItTo; ++h)
+	{
+		for (int v = vItFrom; v <= vItTo; ++v)
+		{
+ 			const uint_t sqlen = (h - hcenter) * (h - hcenter) + (v - vcenter) * (v - vcenter);
+			if ((sqlen < lowerbound) || (uperbound < sqlen))
+				continue;
+
+			if (sqradius <= sqlen)
+			{
+				const float extra = (sqlen - sqradius) * inv2radius;
+				if (extra < 0.25f)
+					setPixel(h, v, color);
+
+				else
+					setPixel(h, v, color, 1.0f - extra);
+			}
+			else if (sqlen <= sqradius_l)
+			{
+				const float extra = -(sqlen - sqradius_l) * inv2radius_l;
+				if (extra < .5f)
+					setPixel(h, v, color, 1.0f - extra);
+			}
+			else
+				setPixel(h, v, color);
+		}
+	}
+}
+
+void DrawableCanvas::drawCircle(int hcenter, int vcenter, int radius, uint8_t width, const PixelColorProvider& pixel) const
+{
+	if (radius < 0)
+		return;
+
+	else if (radius == 0)
+	{
+		if ((0 <= hcenter) && (hcenter < m_Width )
+			&& (0 <= vcenter) && (vcenter < m_Height))
+		{
+			setPixel(hcenter, vcenter, pixel);
+		}
+		return;
+	}
+
+	const uint_t uperbound = radius * (radius + 1);   // (x + 0.5)^2
+	const uint_t lowerbound = radius * (radius - 1);  // (x - 0.5)^2
+	const uint_t sqradius = radius * radius;
+	const uint_t inv2radius = 1.f / (2 * (radius - 1)); //an extra for 2 is the scaling factor
+
+	int hItFrom = hcenter - radius;
+	if (hItFrom < 0) { hItFrom = 0; if (abs(hItFrom - hcenter) >= radius) return;}
+	int hItTo = hcenter + radius;
+	if (hItTo >= m_Width) {  hItTo = m_Width - 1; if (abs(hItTo - hcenter) >= radius) return; }
+
+	int vItFrom = vcenter - radius;
+	if (vItFrom < 0) { vItFrom = 0; if (abs(vItFrom - vcenter) >= radius) return; }
+
+	int vItTo = vcenter + radius;
+	if (vItTo >= m_Height) { vItTo = m_Height - 1; if (abs(vItTo - vcenter) >= radius) return; }
+
+	for (int h = hItFrom; h <= hItTo; ++h)
+	{
+		for (int v = vItFrom; v <= vItTo; ++v)
+		{
+ 			const uint_t sqlen = (h - hcenter) * (h - hcenter) + (v - vcenter) * (v - vcenter);
+			if ((sqlen <= lowerbound) || (sqlen >= uperbound))
+				continue;
+
+			if (sqradius < sqlen)
+			{
+				const float extra = 1.0f - (sqlen - sqradius) * inv2radius ;
+				setPixel(h, v, pixel, extra);
+			}
+			else
+			{
+				const float extra = 1.0f + (sqlen - sqradius) * inv2radius;
+				setPixel(h, v, pixel, extra);
+			}
+		}
+	}
 }
 
 void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle) const

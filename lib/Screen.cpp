@@ -14,7 +14,7 @@ Screen::Screen()
 {
 	if (! sm_GUIInited)
 	{
-		tui_qui_initialize();
+		tui_gui_initialize();
 		sm_GUIInited = true;
 	}
 

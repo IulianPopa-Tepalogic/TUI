@@ -9,7 +9,7 @@
 
 #include "tui_hwconfig.h"
 
-bool tui_qui_initialize();
+bool tui_gui_initialize();
 void tui_update_screen();
 
 /*
