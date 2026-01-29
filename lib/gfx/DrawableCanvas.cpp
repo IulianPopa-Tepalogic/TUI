@@ -472,7 +472,6 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 {
     if (dashFill == 0) return;
 
-    // dashSkip==0 => solid line, reuse your existing AA implementation
     if (dashSkip == 0) {
         drawLine(hfrom, vfrom, hto, vto, color);
         return;
@@ -480,7 +479,6 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 
     if (!clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height)) return;
 
-    // Fast paths (keep your helpers)
     if (hfrom == hto) { drawVLine(hfrom, vfrom, vto - vfrom, 1, color); return; }
     if (vfrom == vto) { drawHLine(hfrom, vfrom, hto - hfrom, 1, color); return; }
 
@@ -664,7 +662,6 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 {
     if (dashFill == 0) return;
 
-    // dashSkip==0 => solid line, reuse your existing AA implementation
     if (dashSkip == 0) {
         drawLine(hfrom, vfrom, hto, vto, pixel);
         return;
@@ -672,7 +669,6 @@ void DrawableCanvas::drawLine(int hfrom, int vfrom, int hto, int vto, const Pixe
 
     if (!clip_line(&hfrom, &vfrom, &hto, &vto, m_Width, m_Height)) return;
 
-    // Keep your fast paths
     if (hfrom == hto) { drawVLine(hfrom, vfrom, vto - vfrom, 1, pixel); return; }
     if (vfrom == vto) { drawHLine(hfrom, vfrom, hto - hfrom, 1, pixel); return; }
 
@@ -1310,51 +1306,6 @@ void DrawableCanvas::drawVLine (int hfrom, int vfrom, int length, int width, con
 }
 
 
-static bool check_point_first_cadrant(float startAngle, float endAngle, float tanStart, float tanEnd, float dh, float dv)
-{
-	if ((startAngle > 90.0f) || (dh < .0f) || (dv < .0f))
-		return false;
-
-	if ((dh != .0f) && (tanStart <= (dv / dh)))
-		return (endAngle >= 90.0f) || ((dh != .0f) && ((dv / dh) <= tanEnd));
-
-	return (dh == .0f) && (endAngle >= 90.0f);
-}
-
-static bool check_point_second_cadrant(float startAngle, float endAngle, float tanStart, float tanEnd, float dh, float dv)
-{
-	if ((startAngle > 180.0f) || (endAngle <= 90.0f) || (dh > .0f) || (dv < .0f))
-		return false;
-
-	if ((startAngle <= 90.0f) || ((dh != .0f) && (tanStart <= (dv / dh))))
-		return (endAngle >= 180.0f) || ((dh != .0f) && ((dv / dh) <= tanEnd));
-
-	return false;
-}
-
-static bool check_point_third_cadrant(float startAngle, float endAngle, float tanStart, float tanEnd, float dh, float dv)
-{
-	if ((startAngle > 270.0f) || (endAngle <= 180.0f) || (dh > .0f) || (dv > .0f))
-		return false;
-
-	if ((startAngle <= 180.0f) || ((dh != .0f) && (tanStart <= (dv / dh))))
-		return (endAngle >= 270.0f) || ((dh != .0f) && ((dv / dh) <= tanEnd));
-
-	return false;
-}
-
-static bool check_point_fourth_cadrant(float startAngle, float endAngle, float tanStart, float tanEnd, float dh, float dv)
-{
-	if ((endAngle <= 270.0f) || (dh < .0f) || (dv > .0f))
-		return false;
-
-	if ((startAngle <= 270.0f) || ((dh != .0f) && (tanStart <= (dv / dh))))
-		return (dv / dh) <= tanEnd;
-
-	return (dh == .0f) && (endAngle > 270.0f) && (startAngle <= 270.0f);
-}
-
-
 void DrawableCanvas::drawCircle(int hcenter, int vcenter, int radius, uint8_t width, const Pixel& color) const
 {
 	if (radius < 0)
@@ -1473,157 +1424,230 @@ void DrawableCanvas::drawCircle(int hcenter, int vcenter, int radius, uint8_t wi
 	}
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle) const
+enum Cadrant
 {
-	if (width < 0)
+	First,
+	Second,
+	Third,
+	Fourth
+};
+
+static inline Cadrant getCadrant(int xc, int yc, int xp, int yp)
+{
+	if (yp >= yc)
+		return (xp >= xc) ? Cadrant::First : Cadrant::Second;
+
+	else
+		return (xp < xc) ? Cadrant::Third : Cadrant::Fourth;
+}
+
+static inline Cadrant getCadrant(float angle)
+{
+	if (angle <= 90.0f)
+		return Cadrant::First;
+
+	else if (angle <= 180.0f)
+		return Cadrant::Second;
+
+	else if (angle <= 270.0f)
+		return Cadrant::Third;
+
+	else
+		return Cadrant::Fourth;
+}
+
+static inline bool is_point_over_line(float m, float b, int x, int y)
+{
+	return (y + 1 > (int)(m * x + b));
+}
+
+static inline bool is_point_under_line(float m, float b, int x, int y)
+{
+	return (y <= (int)(m * x + b));
+}
+
+
+static inline bool is_point_in_arc(Cadrant cadAngle, Cadrant cadPoint, float ms, float bs, int h, int v)
+{
+	if (cadPoint < cadAngle)
+		return true;
+
+	else if (cadPoint > cadAngle)
+		return false;
+
+	const bool underLine = is_point_under_line(ms, bs, h, v);
+	return ((cadAngle == Cadrant::Fourth) | (cadAngle == Cadrant::First))
+			? is_point_under_line(ms, bs, h, v)
+			: is_point_over_line(ms, bs, h, v);
+}
+
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const Pixel& color, float startAngle, float endAngle) const
+{
+	bool inverseAngles = false;
+
+	if (radius < 0)
+		return;
+
+	else if (radius == 0)
 	{
-		radius += -width;
-		width = -width;
+		if ((0 <= hcenter) && (hcenter < m_Width )
+			&& (0 <= vcenter) && (vcenter < m_Height))
+		{
+			setPixel(hcenter, vcenter, color);
+		}
+		return;
 	}
 
-	if ((radius < 1) || (width == 0))
-		return ;
+	if (width > radius) width = radius;
 
-	while (360.f < startAngle)
-		startAngle -= 360.0f;
+	startAngle = MathCalcs::normalizeDeg(startAngle);
+	endAngle = MathCalcs::normalizeDeg(endAngle);
+	if (endAngle >= startAngle) inverseAngles = true;
 
-	while (startAngle < .0f)
-		startAngle += 360.0f;
+	const Cadrant startCadrant = getCadrant(startAngle);
+	const Cadrant endCadrant = getCadrant(endAngle);
 
-	while (endAngle < startAngle)
-		endAngle += 360.0f;
+	const float ms = ::tan(MathCalcs::deg2rad(startAngle)), bs = vcenter - ms * hcenter;
+	const float me = ::tan(MathCalcs::deg2rad(endAngle)), be = vcenter - me * hcenter;
 
-	const float tanStartAngle = tan(MathCalcs::deg2rad(startAngle));
-	const float tanEndAngle = tan(MathCalcs::deg2rad(endAngle));
+    auto is_point_in_valid = [&](int h, int v) -> bool {
+    	const auto pointCadrant = getCadrant(hcenter, vcenter, h, v);
+    	const bool test1 = is_point_in_arc(startCadrant, pointCadrant, ms, bs, h, v);
+    	const bool test2 = is_point_in_arc(endCadrant, pointCadrant, me, be, h, v);
+    	const bool result = test1 ^ test2;
+    	return inverseAngles ? !result : result;
+    };
 
-	int first_ring_radius = radius;
-	int second_ring_radius = max<int>(radius - width + 1, 0);
+	const uint_t radius_l = (radius - width + 1);
+	const uint_t uperbound = (radius + 1) * (radius + 1);
+	const uint_t lowerbound = (radius_l - 1)* (radius_l - 1);
+	const uint_t sqradius = radius * radius;
+	const uint_t sqradius_l = radius_l * radius_l;
+	const float inv2radius = 1.f / (2 * radius); //an extra for 2 is the scaling factor
+	const float inv2radius_l = 1.f / (2 * radius_l); //an extra for 2 is the scaling factor
 
-	int lastFirstV = first_ring_radius, lastSecondV = second_ring_radius;
-	for (int it_h = 0; it_h <= first_ring_radius; ++it_h)
+	int hItFrom = hcenter - radius;
+	if (hItFrom < 0) { hItFrom = 0; if (abs(hItFrom - hcenter) >= radius) return;}
+	int hItTo = hcenter + radius;
+	if (hItTo >= m_Width) {  hItTo = m_Width - 1; if (abs(hItTo - hcenter) >= radius) return; }
+
+	int vItFrom = vcenter - radius;
+	if (vItFrom < 0) { vItFrom = 0; if (abs(vItFrom - vcenter) >= radius) return; }
+
+	int vItTo = vcenter + radius;
+	if (vItTo >= m_Height) { vItTo = m_Height - 1; if (abs(vItTo - vcenter) >= radius) return; }
+
+	for (int h = hItFrom; h <= hItTo; ++h)
 	{
-		const int firstV = sqrt((float)(first_ring_radius * first_ring_radius - it_h * it_h));
-		const int secondV = (it_h < second_ring_radius) ? sqrt((float)(second_ring_radius * second_ring_radius - it_h * it_h)) : 0;
-
-		for (int it_v = lastFirstV + 1; it_v > firstV; --it_v)
+		for (int v = vItFrom; v <= vItTo; ++v)
 		{
-			const float cradius = sqrt((float)(it_h*it_h + it_v*it_v));
-			float err = fabs(cradius - first_ring_radius);
-			if (1.f < err)
+ 			const uint_t sqlen = (h - hcenter) * (h - hcenter) + (v - vcenter) * (v - vcenter);
+			if ((sqlen < lowerbound) || (uperbound < sqlen) || !is_point_in_valid(h, v))
 				continue;
 
-			err = 1.f - err;
-
-			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, it_v))
-				setPixel(hcenter + it_h, vcenter + it_v, pixel, err);
-
-			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, -it_v))
-				setPixel(hcenter + it_h, vcenter - it_v, pixel, err);
-
-			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, it_v))
-				setPixel(hcenter - it_h, vcenter + it_v, pixel, err);
-
-			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, -it_v))
-				setPixel(hcenter - it_h, vcenter - it_v, pixel, err);
-		}
-
-		for (int idv = firstV; (idv > secondV) || (idv == 0); --idv)
-		{
-			if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, idv))
-				setPixel(hcenter + it_h, vcenter + idv, pixel);
-
-			if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, it_h, -idv))
-				setPixel(hcenter + it_h, vcenter - idv, pixel);
-
-			if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, idv))
-				setPixel(hcenter - it_h, vcenter + idv, pixel);
-
-			if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -it_h, -idv))
-				setPixel(hcenter - it_h, vcenter - idv, pixel);
-		}
-
-
-		int lastH = it_h - 1;
-		if (lastH >= 0)
-		{
-			for (int idv = lastSecondV + 1; idv >= secondV; --idv)
+			if (sqradius <= sqlen)
 			{
-				const float cradius = sqrt((float)(lastH*lastH + idv*idv));
-				float err = fabs(cradius - second_ring_radius);
-				if (1.f < err)
-					continue;
+				const float extra = (sqlen - sqradius) * inv2radius;
+				if (extra < 0.25f)
+					setPixel(h, v, color);
 
-				err = 1.f - err;
-				if (check_point_first_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastH, idv))
-					setPixel(hcenter + lastH, vcenter + idv, pixel, err);
-
-				if (check_point_fourth_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, lastH, -idv))
-					setPixel(hcenter + lastH, vcenter - idv, pixel, err);
-
-				if (check_point_second_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastH, +idv))
-					setPixel(hcenter - lastH, vcenter + idv, pixel, err);
-
-				if (check_point_third_cadrant(startAngle, endAngle, tanStartAngle, tanEndAngle, -lastH, -idv))
-					setPixel(hcenter - lastH, vcenter - idv, pixel, err);
+				else
+					setPixel(h, v, color, 1.0f - extra);
 			}
+			else if (sqlen <= sqradius_l)
+			{
+				const float extra = -(sqlen - sqradius_l) * inv2radius_l;
+				if (extra < .5f)
+					setPixel(h, v, color, 1.0f - extra);
+			}
+			else
+				setPixel(h, v, color);
 		}
-
-		lastFirstV = firstV;
-		lastSecondV = secondV;
 	}
 }
 
-void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle, uint8_t dashFill, uint8_t dashSkip) const
+
+void DrawableCanvas::drawSemiCircle(int hcenter, int vcenter, int radius, int width, const PixelColorProvider& pixel, float startAngle, float endAngle) const
 {
-	if (dashFill == 0)
-		return ;
-	else if (dashSkip == 0)
+	bool inverseAngles = false;
+
+	if (radius < 0)
+		return;
+
+	else if (radius == 0)
 	{
-		drawSemiCircle(hcenter, vcenter, radius, width, pixel, startAngle, endAngle);
-		return ;
-	}
-
-	if (width < 0)
-	{
-		radius += -width;
-		width = -width;
-	}
-
-	if ((radius < 1) || (width == 0))
-		return ;
-
-	if (endAngle < startAngle)
-		endAngle += 360.0f;
-
-	if (endAngle < startAngle)
-		swap(endAngle, startAngle);
-
-	auto fill = dashFill;
-	const float step = 1.0f;
-	for (float angle = startAngle; angle <= endAngle; angle += step)
-	{
-		if (fill == 0)
+		if ((0 <= hcenter) && (hcenter < m_Width )
+			&& (0 <= vcenter) && (vcenter < m_Height))
 		{
-			angle += (dashSkip - 1) * step;
-			fill = dashFill;
-			continue ;
+			setPixel(hcenter, vcenter, pixel);
 		}
-		else
-			fill--;
+		return;
+	}
 
-		const float angleCos = MathCalcs::cos(angle);
-		const float angleSin = MathCalcs::sin(angle);
-		const float last = max<int>(radius - width, 0);
+	if (width > radius) width = radius;
 
-		for (float r = radius; r > last; r -= 1.0f)
+	startAngle = MathCalcs::normalizeDeg(startAngle);
+	endAngle = MathCalcs::normalizeDeg(endAngle);
+	if (endAngle >= startAngle) inverseAngles = true;
+
+	const Cadrant startCadrant = getCadrant(startAngle);
+	const Cadrant endCadrant = getCadrant(endAngle);
+
+	const float ms = ::tan(MathCalcs::deg2rad(startAngle)), bs = vcenter - ms * hcenter;
+	const float me = ::tan(MathCalcs::deg2rad(endAngle)), be = vcenter - me * hcenter;
+
+    auto is_point_in_valid = [&](int h, int v) -> bool {
+    	const auto pointCadrant = getCadrant(hcenter, vcenter, h, v);
+    	const bool test1 = is_point_in_arc(startCadrant, pointCadrant, ms, bs, h, v);
+    	const bool test2 = is_point_in_arc(endCadrant, pointCadrant, me, be, h, v);
+    	const bool result = test1 ^ test2;
+    	return inverseAngles ? !result : result;
+    };
+
+	const uint_t radius_l = (radius - width + 1);
+	const uint_t uperbound = (radius + 1) * (radius + 1);
+	const uint_t lowerbound = (radius_l - 1)* (radius_l - 1);
+	const uint_t sqradius = radius * radius;
+	const uint_t sqradius_l = radius_l * radius_l;
+	const float inv2radius = 1.f / (2 * radius); //an extra for 2 is the scaling factor
+	const float inv2radius_l = 1.f / (2 * radius_l); //an extra for 2 is the scaling factor
+
+	int hItFrom = hcenter - radius;
+	if (hItFrom < 0) { hItFrom = 0; if (abs(hItFrom - hcenter) >= radius) return;}
+	int hItTo = hcenter + radius;
+	if (hItTo >= m_Width) {  hItTo = m_Width - 1; if (abs(hItTo - hcenter) >= radius) return; }
+
+	int vItFrom = vcenter - radius;
+	if (vItFrom < 0) { vItFrom = 0; if (abs(vItFrom - vcenter) >= radius) return; }
+
+	int vItTo = vcenter + radius;
+	if (vItTo >= m_Height) { vItTo = m_Height - 1; if (abs(vItTo - vcenter) >= radius) return; }
+
+	for (int h = hItFrom; h <= hItTo; ++h)
+	{
+		for (int v = vItFrom; v <= vItTo; ++v)
 		{
-			const float h = hcenter + angleCos * r;
-			const float v = vcenter + angleSin * r;
+ 			const uint_t sqlen = (h - hcenter) * (h - hcenter) + (v - vcenter) * (v - vcenter);
+			if ((sqlen < lowerbound) || (uperbound < sqlen) || !is_point_in_valid(h, v))
+				continue;
 
-			const int hrnd = round(h);
-			const int vrnd = round(v);
+			if (sqradius <= sqlen)
+			{
+				const float extra = (sqlen - sqradius) * inv2radius;
+				if (extra < 0.25f)
+					setPixel(h, v, pixel);
 
-			setPixel(hrnd, vrnd, pixel, 1.0f - fabs(h - hrnd + v - vrnd) / 2.0f);
+				else
+					setPixel(h, v, pixel, 1.0f - extra);
+			}
+			else if (sqlen <= sqradius_l)
+			{
+				const float extra = -(sqlen - sqradius_l) * inv2radius_l;
+				if (extra < .5f)
+					setPixel(h, v, pixel, 1.0f - extra);
+			}
+			else
+				setPixel(h, v, pixel);
 		}
 	}
 }

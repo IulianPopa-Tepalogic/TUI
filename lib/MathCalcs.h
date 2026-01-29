@@ -8,6 +8,8 @@
 #ifndef MATHCALCS_H_
 #define MATHCALCS_H_
 
+#include <cmath>
+
 class MathCalcs {
 public:
 	static float sin(float clockWiseAngle) {
@@ -30,8 +32,8 @@ public:
 	static constexpr float deg2rad (const float deg) { return deg * 3.1415f / 180.0f; }
 
 	static constexpr float normalizeDeg(float deg) {
-		while (deg < .0f) deg += 360.0f;
-		while (deg >= 360.0f) deg -= 360.0f;
+		deg = ::fmod(deg, 360.0f);
+		if (deg < 0.0f) deg += 360.0f;
 		return deg;
 	}
 
